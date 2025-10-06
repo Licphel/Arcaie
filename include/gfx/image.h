@@ -1,0 +1,87 @@
+#pragma once
+#include <core/hio.h>
+#include <core/def.h>
+#include <core/math.h>
+
+namespace arcaie::gfx
+{
+
+struct brush;
+
+struct image
+{
+    int width, height;
+    byte *pixels;
+    /* unstable */ bool __is_from_stb = false;
+
+    image();
+    image(byte *data, int w, int h);
+    ~image();
+};
+
+struct texture
+{
+    int u = 0;
+    int v = 0;
+    int width = 0;
+    int height = 0;
+    int fwidth = 0;
+    int fheight = 0;
+    /* maybe nullptr */ shared<image> __relying_image = nullptr;
+    /* unstable */ unsigned int __texture_id = 0;
+    /* unstable */ bool __is_framebuffer;
+    shared<texture> root = nullptr;
+
+    ~texture();
+};
+
+enum texture_parameter
+{
+    ARC_UV_REPEAT,
+    ARC_UV_CLAMP,
+    ARC_UV_MIRROR,
+    ARC_FILTER_NEAREST,
+    ARC_FILTER_LINEAR
+};
+
+struct texture_parameters
+{
+    texture_parameter uv = ARC_UV_REPEAT;
+    texture_parameter min_filter = ARC_FILTER_NEAREST;
+    texture_parameter mag_filter = ARC_FILTER_NEAREST;
+};
+
+shared<image> load_image(const hio_path &path);
+shared<image> make_image(int width, int height, byte *data);
+shared<texture> make_texture(shared<image> img);
+void set_texture_parameters(shared<texture> tex, texture_parameters param);
+void lazylink_texture_data(shared<texture> tex, shared<image> img);
+shared<texture> cut_texture(shared<texture> tex, const quad &src);
+void bind_texture(int i, shared<texture> tex);
+
+struct nine_patches
+{
+    shared<texture> b;
+    shared<texture> c;
+    shared<texture> l;
+    shared<texture> lb;
+    shared<texture> lt;
+    shared<texture> r;
+    shared<texture> rb;
+    shared<texture> rt;
+    shared<texture> t;
+    double scale;
+    double th;
+    double tw;
+    // enable overlapping can make the size control of nine-patches more accurate.
+    // however, if your texture contains some transparent parts, it's better to turn it off.
+    bool __enable_overlapping = true;
+
+    nine_patches();
+    nine_patches(shared<texture> tex);
+    nine_patches(shared<texture> tex, double scale);
+
+    void make_vtx(brush *brush, const quad &dst) const;
+};
+
+} // namespace arcaie::gfx

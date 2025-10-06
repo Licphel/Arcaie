@@ -1,0 +1,99 @@
+#pragma once
+#include <cstring>
+#include <gfx/camera.h>
+#include <gfx/color.h>
+#include <gfx/device.h>
+#include <gfx/cbuf.h>
+#include <core/math.h>
+#include <core/math.h>
+#include <stack>
+#include <functional>
+
+namespace arcaie::gfx
+{
+
+enum brush_flag
+{
+    ARC_BFLAG_NO = 1LL << 0,
+    ARC_BFLAG_FLIP_X = 1LL << 1,
+    ARC_BFLAG_FLIP_Y = 1LL << 2
+};
+
+enum blend_mode
+{
+    ARC_NORMAL_BLEND,
+    ARC_ADDITIVE_BLEND
+};
+
+struct graph_state
+{
+    graph_mode mode = ARC_TEXTURED_QUAD;
+    shared<texture> texture = nullptr;
+    shared<shader_program> program = nullptr;
+    std::function<void(shared<shader_program> program)> callback_uniform;
+    std::function<void(unique<complex_buffer> buf)> callback_buffer_append;
+};
+
+// pre-declare
+struct mesh;
+
+struct brush
+{
+    color vertex_color[4]{};
+    std::stack<transform> transform_stack;
+    camera camera_binded;
+    graph_state m_state;
+    shared<shader_program> __default_colored;
+    shared<shader_program> __default_textured;
+    weak<complex_buffer> buffer;
+    mesh *__mesh_root;
+    bool __is_in_mesh = false;
+    // when true, the brush will clear the buffer when flushed.
+    bool __clear_when_flush = true;
+
+    brush();
+
+    // since brush just holds a weak reference to the buffer, this method gets it and check the validity.
+    shared<complex_buffer> lock_buffer();
+    graph_state &current_state();
+    void cl_norm();
+    void cl_set(const color &col);
+    void cl_mrg(const color &col);
+    void cl_mrg(double v);
+    void ts_push();
+    void ts_pop();
+    void ts_load(const transform &t);
+    void ts_trs(const vec2 &v);
+    void ts_scl(const vec2 &v);
+    void ts_shr(const vec2 &v);
+    void ts_rot(double r);
+    void ts_rot(const vec2 &v, double r);
+    transform get_combined_transform();
+
+    void flush();
+    void assert_mode(graph_mode mode);
+    void assert_texture(shared<texture> tex);
+    void use(const camera &cam);
+    void use(shared<shader_program> program);
+    void use(const graph_state &sts);
+
+    void draw_texture(shared<texture> tex, const quad &dst, const quad &src, brush_flag flag = ARC_BFLAG_NO);
+    void draw_texture(shared<texture> tex, const quad &dst, brush_flag flag = ARC_BFLAG_NO);
+    void draw_rect(const quad &dst);
+    void draw_rect_outline(const quad &dst);
+    void draw_triagle(const vec2 &p1, const vec2 &p2, const vec2 &p3);
+    void draw_line(const vec2 &p1, const vec2 &p2);
+    void draw_point(const vec2 &p);
+    void draw_oval(const quad &dst, int segs = 16);
+    void draw_oval_outline(const quad &dst, int segs = 16);
+
+    void clear(const color &col);
+    void viewport(const quad &quad);
+    void scissor(const quad &quad);
+    void scissor_end();
+    void use(blend_mode mode);
+};
+
+unique<brush> make_brush(shared<complex_buffer> buf);
+
+} // namespace arcaie::gfx

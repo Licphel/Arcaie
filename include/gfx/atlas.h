@@ -1,0 +1,32 @@
+#pragma once
+#include <core/def.h>
+#include <gfx/image.h>
+
+namespace arcaie::gfx
+{
+
+struct atlas
+{
+    int width;
+    int height;
+    byte *pixels;
+    shared<image> output_image = nullptr;
+    shared<texture> output_texture = nullptr;
+
+    struct _impl;
+    unique<_impl> __p;
+
+    atlas(int w, int h);
+    ~atlas();
+
+    void begin();
+    void end();
+    // add an image to the atlas, and get its texture.
+    shared<texture> accept(shared<image> image);
+    // write an image to the atlas.
+    void imgcpy(shared<image> image, int dest_x, int dest_y);
+};
+
+shared<atlas> make_atlas(int w, int h);
+
+} // namespace arcaie
