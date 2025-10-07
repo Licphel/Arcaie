@@ -1,34 +1,37 @@
 #include <gfx/atlas.h>
-#include <gl/glew.h>
-#include <gl/gl.h>
 #include <core/log.h>
 #include <algorithm>
 #include <vector>
 #include <core/math.h>
+
+// clang-format off
+#include <gl/glew.h>
+#include <gl/gl.h>
+// clang-format on
 
 #define PADDING 1
 
 namespace arcaie::gfx
 {
 
-struct atlas::_impl
+struct atlas::P_impl
 {
     std::vector<quad> free_rects;
 };
 
-// for unique_ptr<_impl> to refer
+// for unique_ptr<P_impl> to refer
 atlas::atlas(int w, int h)
-    : width(w + PADDING), height(h + PADDING), pixels(new byte[width * height * 4]), __p(std::make_unique<_impl>())
+    : width(w + PADDING), height(h + PADDING), pixels(new byte[width * height * 4]), P_p(std::make_unique<P_impl>())
 {
 }
 
-// for unique_ptr<_impl> to refer
+// for unique_ptr<P_impl> to refer
 atlas::~atlas() = default;
 
 void atlas::begin()
 {
-    __p->free_rects.clear();
-    __p->free_rects.push_back(quad(0, 0, width, height));
+    P_p->free_rects.clear();
+    P_p->free_rects.push_back(quad(0, 0, width, height));
 
     output_image = make_image(width, height, pixels);
     output_texture = make_texture(nullptr);
@@ -52,7 +55,7 @@ shared<texture> atlas::accept(shared<image> image)
     int rw = image->width;
     int rh = image->height;
 
-    std::vector<quad> &free_rects = __p->free_rects;
+    std::vector<quad> &free_rects = P_p->free_rects;
 
     int best = -1, best_score = INT_MAX;
     for (size_t i = 0; i < free_rects.size(); ++i)
@@ -65,7 +68,7 @@ shared<texture> atlas::accept(shared<image> image)
             best_score = score, best = (int)i;
     }
     if (best == -1)
-        prtlog_throw(ARC_FATAL, "atlas is not big enough. please expand it.");
+        arcthrow(ARC_FATAL, "atlas is not big enough. please expand it.");
 
     quad used = free_rects[best];
     int dx = used.x;

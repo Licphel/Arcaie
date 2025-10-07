@@ -1,6 +1,6 @@
 #pragma once
 #include <core/bin.h>
-#include <core/hio.h>
+#include <core/io.h>
 #include <core/buffer.h>
 
 namespace arcaie
@@ -8,9 +8,9 @@ namespace arcaie
 
 binary_map bio_read_buf(byte_buf &v);
 byte_buf bio_write_buf(const binary_map &map);
-binary_map bio_read(const hio_path &path);
-void bio_write(const binary_map &map, const hio_path &path);
+binary_map bio_read(const path_handle &path);
+void bio_write(const binary_map &map, const path_handle &path);
 // read a script-form binary map (like json, but not the same).
-binary_map bio_read_langd(const hio_path &path);
+binary_map bio_read_langd(const path_handle &path);
 
 } // namespace arcaie

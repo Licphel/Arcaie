@@ -28,8 +28,8 @@ struct complex_buffer
     int vertex_count = 0;
     int index_count = 0;
     bool dirty;
-    bool __icap_changed;
-    bool __vcap_changed;
+    bool P_icap_changed;
+    bool P_vcap_changed;
 
     // write a vertex, generally, T is float.
     template <typename T> complex_buffer &vtx(T t)
@@ -39,7 +39,7 @@ struct complex_buffer
         if (old + s > vertex_buf.capacity())
         {
             vertex_buf.reserve(vertex_buf.capacity() * 2);
-            __vcap_changed = true;
+            P_vcap_changed = true;
         }
 
         vertex_buf.resize(old + s);
@@ -57,7 +57,7 @@ struct complex_buffer
         if (old + s > index_buf.capacity())
         {
             index_buf.reserve(index_buf.capacity() * 2);
-            __icap_changed = true;
+            P_icap_changed = true;
         }
 
         index_buf.push_back(t);

@@ -1,20 +1,20 @@
 #include <core/log.h>
 #include <vector>
 #include <fstream>
-#include <core/hio.h>
+#include <core/io.h>
 
 namespace arcaie
 {
 
-static std::ofstream __logstream = std::ofstream(hio_open_local("latest.log").__npath);
+static std::ofstream P_logstream = std::ofstream(io_open_local("latest.log").P_npath);
 
-void __log_redirect()
+void log_redirect()
 {
-    std::cout.rdbuf(__logstream.rdbuf());
-    std::cerr.rdbuf(__logstream.rdbuf());
+    std::cout.rdbuf(P_logstream.rdbuf());
+    std::cerr.rdbuf(P_logstream.rdbuf());
 }
 
-std::string __get_header(log_type type)
+std::string P_get_header(log_type type)
 {
     std::string header;
     switch (type)

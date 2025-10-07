@@ -8,7 +8,7 @@ namespace arcaie
 struct uuid
 {
     byte bytes[16] = {0};
-    size_t __hash;
+    size_t P_hash;
 
     uuid() = default;
 
@@ -32,7 +32,7 @@ template <> struct hash<arcaie::uuid>
 {
     std::size_t operator()(const arcaie::uuid &id) const noexcept
     {
-        return id.__hash;
+        return id.P_hash;
     }
 };
 

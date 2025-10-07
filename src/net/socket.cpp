@@ -20,7 +20,7 @@ namespace asio = boost::asio;
 using tcp = asio::ip::tcp;
 using udp = asio::ip::udp;
 
-template <typename T> class __blocking_queue
+template <typename T> class P_blocking_queue
 {
   private:
     size_t capacity;
@@ -30,7 +30,7 @@ template <typename T> class __blocking_queue
     std::condition_variable cv_full;
 
   public:
-    explicit __blocking_queue(size_t cap = 0) : capacity(cap)
+    explicit P_blocking_queue(size_t cap = 0) : capacity(cap)
     {
     }
 
@@ -60,7 +60,7 @@ template <typename T> class __blocking_queue
     }
 };
 
-struct socket::_impl
+struct socket::P_impl
 {
     asio::io_context ioc;
     std::thread worker;
@@ -79,7 +79,7 @@ struct socket::_impl
     {
         tcp::socket sock;
         byte_buf rcvbuf = byte_buf(NET_BUF_SIZE);
-        __blocking_queue<shared<packet>> snd_packets;
+        P_blocking_queue<shared<packet>> snd_packets;
         uuid id;
         std::thread worker;
         bool is_term = false;
@@ -88,19 +88,19 @@ struct socket::_impl
         channel() = delete;
         channel(asio::io_context &ioc, uuid uid) : sock(ioc), id(uid)
         {
-            worker = std::thread([this] { __write(); });
+            worker = std::thread([this] { P_write(); });
         }
 
-        void __write()
+        void P_write()
         {
             auto pkt = snd_packets.take();
             auto buf = packet::pack(pkt);
             asio::async_write(sock, asio::buffer(buf), [this](std::error_code ec, size_t) {
                 if (ec)
-                    prtlog(ARC_WARN, "fail to write async: {}", ec.message());
+                    arclog(ARC_WARN, "fail to write async: {}", ec.message());
                 if (is_term)
                     return;
-                asio::post(sock.get_executor(), [this] { __write(); });
+                asio::post(sock.get_executor(), [this] { P_write(); });
             });
         }
     };
@@ -110,10 +110,10 @@ struct socket::_impl
     bool is_remote = false;
     std::atomic_bool is_term = false;
     std::vector<shared<packet>> rcv_packets;
-    __blocking_queue<shared<packet>> snd_packets;
+    P_blocking_queue<shared<packet>> snd_packets;
     double last_sec_event;
 
-    _impl() : ioc(), client_sock(ioc), acceptor(ioc), broadcaster(ioc)
+    P_impl() : ioc(), client_sock(ioc), acceptor(ioc), broadcaster(ioc)
     {
     }
 
@@ -126,11 +126,11 @@ struct socket::_impl
         asio::async_connect(client_sock, endpoints, [this, host, port](std::error_code ec, tcp::endpoint) {
             if (!ec)
             {
-                prtlog(ARC_INFO, "[remote] successfully connected to {}:{}", host, port);
+                arclog(ARC_INFO, "[remote] successfully connected to {}:{}", host, port);
                 remote_read();
             }
             else
-                prtlog_throw(ARC_WARN, "[remote] cannot connect to {}:{}, cause: {}", host, port, ec.message());
+                arcthrow(ARC_WARN, "[remote] cannot connect to {}:{}, cause: {}", host, port, ec.message());
         });
 
         worker = std::thread([this] {
@@ -140,7 +140,7 @@ struct socket::_impl
                 auto buf = packet::pack(pkt);
                 asio::async_write(client_sock, asio::buffer(buf), [](std::error_code ec, size_t) {
                     if (ec)
-                        prtlog(ARC_WARN, "fail to write async: {}", ec.message());
+                        arclog(ARC_WARN, "fail to write async: {}", ec.message());
                 });
             }
         });
@@ -157,10 +157,10 @@ struct socket::_impl
         is_remote = false;
         is_term = true;
 
-        prtlog(ARC_INFO, "[remote] remote disconnected.");
+        arclog(ARC_INFO, "[remote] remote disconnected.");
     }
 
-    void __read_to_queue(int byte_read, byte_buf &buf, const uuid &id)
+    void P_read_to_queue(int byte_read, byte_buf &buf, const uuid &id)
     {
         if (byte_read == 0)
         {
@@ -208,14 +208,14 @@ struct socket::_impl
 
     void remote_read()
     {
-        client_sock.async_read_some(asio::buffer(rcvbuf.__data.data() + rcvbuf.write_pos(), rcvbuf.free_bytes()),
+        client_sock.async_read_some(asio::buffer(rcvbuf.P_data.data() + rcvbuf.write_pos(), rcvbuf.free_bytes()),
                                     [this](std::error_code ec, size_t n) {
                                         if (ec)
                                         {
-                                            prtlog(ARC_WARN, "[remote] connection is denied.");
+                                            arclog(ARC_WARN, "[remote] connection is denied.");
                                             return;
                                         }
-                                        __read_to_queue(n, rcvbuf, uuid_null());
+                                        P_read_to_queue(n, rcvbuf, uuid_null());
                                         remote_read();
                                         if (is_term)
                                             return;
@@ -249,7 +249,7 @@ struct socket::_impl
 
     void server_start(uint16_t port)
     {
-        prtlog(ARC_INFO, "[server] server is opened at port {}", port);
+        arclog(ARC_INFO, "[server] server is opened at port {}", port);
 
         is_server = true;
 
@@ -271,7 +271,7 @@ struct socket::_impl
         if (ioc_worker.joinable())
             ioc_worker.join();
 
-        prtlog(ARC_INFO, "[server] server is stopped.");
+        arclog(ARC_INFO, "[server] server is stopped.");
 
         is_server = false;
         is_term = true;
@@ -290,7 +290,7 @@ struct socket::_impl
         acceptor.async_accept(remote->sock, [this, remote](std::error_code ec) {
             if (!ec)
             {
-                prtlog(ARC_INFO, "[server] server has connected remote {}", (std::string)remote.get()->id);
+                arclog(ARC_INFO, "[server] server has connected remote {}", (std::string)remote.get()->id);
                 server_read(remote);
                 channels[remote->id] = remote;
             }
@@ -302,18 +302,18 @@ struct socket::_impl
 
     void server_read(shared<channel> r)
     {
-        r->sock.async_read_some(asio::buffer(r->rcvbuf.__data.data() + r->rcvbuf.write_pos(), r->rcvbuf.free_bytes()),
+        r->sock.async_read_some(asio::buffer(r->rcvbuf.P_data.data() + r->rcvbuf.write_pos(), r->rcvbuf.free_bytes()),
                                 [this, r](std::error_code ec, size_t n) {
                                     if (ec)
                                     {
                                         channels.erase(r->id);
                                         r->is_term = true;
-                                        prtlog(ARC_INFO, "[server] connection lost: {}", (std::string)r->id);
+                                        arclog(ARC_INFO, "[server] connection lost: {}", (std::string)r->id);
                                         return;
                                     }
                                     if (is_term)
                                         return;
-                                    __read_to_queue(n, r->rcvbuf, r->id);
+                                    P_read_to_queue(n, r->rcvbuf, r->id);
                                     server_read(r);
                                 });
     }
@@ -348,7 +348,7 @@ struct socket::_impl
                     auto &c = *it;
                     if (now - c.second->last_beat > NET_TIME_OUT)
                     {
-                        prtlog(ARC_INFO, "remote channel {} timeout.", (std::string)c.second->id);
+                        arclog(ARC_INFO, "remote channel {} timeout.", (std::string)c.second->id);
                         it = channels.erase(it);
                     }
                     else
@@ -378,7 +378,7 @@ struct socket::_impl
     }
 };
 
-socket::socket() : __p(std::make_unique<_impl>())
+socket::socket() : P_pimpl(std::make_unique<P_impl>())
 {
 }
 
@@ -389,7 +389,7 @@ socket::~socket()
 
 void socket::discover()
 {
-    udp::socket udp_sock(__p->ioc);
+    udp::socket udp_sock(P_pimpl->ioc);
     udp_sock.open(udp::v4());
     udp_sock.bind(udp::endpoint(asio::ip::address_v4::any(), 15000));
 
@@ -421,74 +421,74 @@ void socket::discover()
 
     if (!addrs.empty() && ports != 0)
     {
-        prtlog(ARC_INFO, "[remote] found lan server {}:{}, trying to connect now.", addrs, ports);
-        __p->remote_connect(addrs, ports);
+        arclog(ARC_INFO, "[remote] found lan server {}:{}, trying to connect now.", addrs, ports);
+        P_pimpl->remote_connect(addrs, ports);
     }
     else
-        prtlog(ARC_WARN, "[remote] cannot find lan server nearby.");
+        arclog(ARC_WARN, "[remote] cannot find lan server nearby.");
 }
 
 void socket::connect(connection_type type, const std::string &host, uint16_t port)
 {
     if (type == connection_type::integrated_server)
-        __p->remote_connect("127.0.0.1", port ? port : 8080);
+        P_pimpl->remote_connect("127.0.0.1", port ? port : 8080);
     else if (type == connection_type::lan_server)
         discover();
     else if (type == connection_type::address_server)
-        __p->remote_connect(host, port);
+        P_pimpl->remote_connect(host, port);
 }
 
 void socket::send_to_server(shared<packet> pkt)
 {
-    __p->remote_send(pkt);
+    P_pimpl->remote_send(pkt);
 }
 
 void socket::disconnect()
 {
-    __p->remote_disconnect();
+    P_pimpl->remote_disconnect();
 }
 
 void socket::start(uint16_t port)
 {
-    __p->server_start(port ? port : 8080);
+    P_pimpl->server_start(port ? port : 8080);
 }
 
 void socket::stop()
 {
-    __p->server_stop();
+    P_pimpl->server_stop();
 }
 
 void socket::send_to_remote(const uuid &rid, shared<packet> pkt)
 {
-    __p->server_send(rid, pkt);
+    P_pimpl->server_send(rid, pkt);
 }
 
 void socket::send_to_remotes(shared<packet> pkt)
 {
-    __p->server_send_every(pkt);
+    P_pimpl->server_send_every(pkt);
 }
 
 void socket::tick()
 {
-    __p->tick(this);
+    P_pimpl->tick(this);
 }
 
 void socket::hold_alive(const uuid &id)
 {
-    __p->hold_alive(id);
+    P_pimpl->hold_alive(id);
 }
 
-static socket __gsocket_s;
-static socket __gsocket_c;
+static socket P_gsocket_s;
+static socket P_gsocket_c;
 
 socket &get_gsocket_server()
 {
-    return __gsocket_s;
+    return P_gsocket_s;
 }
 
 socket &get_gsocket_remote()
 {
-    return __gsocket_c;
+    return P_gsocket_c;
 }
 
 } // namespace arcaie::net

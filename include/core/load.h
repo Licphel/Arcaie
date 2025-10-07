@@ -1,5 +1,5 @@
 #pragma once
-#include <core/hio.h>
+#include <core/io.h>
 #include <core/id.h>
 #include <map>
 #include <stack>
@@ -9,13 +9,13 @@
 namespace arcaie
 {
 
-std::unordered_map<res_id, std::any> &__get_resource_map();
+std::unordered_map<unique_id, std::any> &P_get_resource_map();
 
 // get a loaded resource by its id.
 // if you are unsure if the resource is loaded, use #make_res_ref instead.
-template <typename T> T make_res(const res_id &id)
+template <typename T> T make_res(const unique_id &id)
 {
-    const auto& m = __get_resource_map();
+    const auto &m = P_get_resource_map();
     auto it = m.find(id);
     bool cf = it != m.end() && it->second.has_value();
     return cf ? std::any_cast<T>(it->second) : std::decay_t<T>{};
@@ -23,11 +23,11 @@ template <typename T> T make_res(const res_id &id)
 
 template <typename T> struct aref
 {
-    res_id id;
+    unique_id id;
 
     bool is_done() const
     {
-        const auto& m = __get_resource_map();
+        const auto &m = P_get_resource_map();
         return m.find(id) != m.end();
     }
 
@@ -37,24 +37,24 @@ template <typename T> struct aref
     }
 };
 
-using proc_strategy = std::function<void(const hio_path &path, const res_id &id)>;
+using proc_strategy = std::function<void(const path_handle &path, const unique_id &id)>;
 
 struct asset_loader
 {
     std::string scope;
-    hio_path root;
+    path_handle root;
     double progress;
-    int __done_tcount;
-    int __total_tcount;
+    int P_done_tcount;
+    int P_total_tcount;
     std::map<std::string, proc_strategy> process_strategy_map;
     std::stack<std::function<void()>> tasks;
     std::vector<shared<asset_loader>> subloaders;
     std::function<void()> event_on_start;
     std::function<void()> event_on_end;
-    bool __start_called;
-    bool __end_called;
+    bool P_start_called;
+    bool P_end_called;
 
-    void scan(const hio_path &path_root);
+    void scan(const path_handle &path_root);
     void add_sub(shared<asset_loader> subloader);
     // run a task in the queue.
     // you may need to check the #progress to see if all tasks are done.
@@ -62,12 +62,12 @@ struct asset_loader
 };
 
 // when you are unsure if the resource is loaded, use this to get a reference to it.
-template <typename T> aref<T> make_res_ref(const res_id &id)
+template <typename T> aref<T> make_res_ref(const unique_id &id)
 {
     return {id};
 }
 
-shared<asset_loader> make_loader(const std::string &scope, const hio_path &root);
+shared<asset_loader> make_loader(const std::string &scope, const path_handle &root);
 
 enum class asset_loader_equip
 {

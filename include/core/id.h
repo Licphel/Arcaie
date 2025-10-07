@@ -2,28 +2,28 @@
 #include <string>
 #include <functional>
 #include <core/def.h>
-#include <core/hio.h>
+#include <core/io.h>
 
 namespace arcaie
 {
 
-struct res_id
+struct unique_id
 {
     std::string scope;
     std::string key;
     std::string concat;
-    size_t __hash;
+    size_t P_hash;
 
-    res_id();
+    unique_id();
     // supports: I. scope:key, II. :key -> def_scope:key, III. key -> def_scope:key
-    res_id(const std::string &cat);
-    res_id(const std::string &sc, const std::string &k);
-    res_id(const char ch_arr[]);
+    unique_id(const std::string &cat);
+    unique_id(const std::string &sc, const std::string &k);
+    unique_id(const char ch_arr[]);
 
-    hio_path find_path();
+    path_handle find_path();
     operator std::string() const;
-    bool operator==(const res_id &other) const;
-    bool operator<(const res_id &other) const;
+    bool operator==(const unique_id &other) const;
+    bool operator<(const unique_id &other) const;
 };
 
 } // namespace arcaie
@@ -31,11 +31,11 @@ struct res_id
 namespace std
 {
 
-template <> struct hash<arcaie::res_id>
+template <> struct hash<arcaie::unique_id>
 {
-    std::size_t operator()(const arcaie::res_id &id) const noexcept
+    std::size_t operator()(const arcaie::unique_id &id) const noexcept
     {
-        return id.__hash;
+        return id.P_hash;
     }
 };
 

@@ -11,16 +11,16 @@ namespace arcaie
 {
 
 // check if the system is little-endian.
-bool __check_is_sysle();
+bool P_check_is_system_little_endian();
 
 // general byte buffer used in serialization, networking, etc.
 // endian-aware.
 struct byte_buf
 {
-    std::vector<byte> __data;
-    size_t __rpos = 0;
-    size_t __wpos = 0;
-    bool __l_endian = __check_is_sysle();
+    std::vector<byte> P_data;
+    size_t P_rpos = 0;
+    size_t P_wpos = 0;
+    bool P_l_endian = P_check_is_system_little_endian();
 
     template <typename T> T swap_endian(T value) const
     {
@@ -42,7 +42,7 @@ struct byte_buf
 
     template <typename T> T to_native_endian(T value) const
     {
-        if (__l_endian)
+        if (P_l_endian)
             return value;
         return swap_endian(value);
     }
@@ -67,21 +67,21 @@ struct byte_buf
     {
         ensure_capacity(sizeof(T));
         T network_value = to_native_endian(value);
-        std::memcpy(__data.data() + __wpos, &network_value, sizeof(T));
-        __wpos += sizeof(T);
+        std::memcpy(P_data.data() + P_wpos, &network_value, sizeof(T));
+        P_wpos += sizeof(T);
     }
 
     void write_bytes(const void *src, size_t len);
     void write_byte_buf(const byte_buf &buf);
     void write_string(const std::string &str);
-    void write_uuid(const uuid& id);
+    void write_uuid(const uuid &id);
 
     template <typename T> typename std::enable_if<std::is_arithmetic<T>::value, T>::type read()
     {
         ensure_readable(sizeof(T));
         T value;
-        std::memcpy(&value, __data.data() + __rpos, sizeof(T));
-        __rpos += sizeof(T);
+        std::memcpy(&value, P_data.data() + P_rpos, sizeof(T));
+        P_rpos += sizeof(T);
         return to_native_endian(value);
     }
 
@@ -94,7 +94,7 @@ struct byte_buf
     {
         ensure_readable(sizeof(T));
         T value;
-        std::memcpy(&value, __data.data() + __rpos, sizeof(T));
+        std::memcpy(&value, P_data.data() + P_rpos, sizeof(T));
         return to_native_endian(value);
     }
 

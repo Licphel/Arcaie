@@ -99,27 +99,27 @@ double camera::unproject_y(double y)
     return v.y;
 }
 
-static camera __cam_abs = {};
-static camera __cam_gui = {};
-static camera __cam_world = {};
+static camera P_cam_abs = {};
+static camera P_cam_gui = {};
+static camera P_cam_world = {};
 
 camera &get_absolute_camera()
 {
     vec2 size = tk_get_size();
     if (size.x == 0 || size.y == 0)
-        return __cam_abs;
-    __cam_abs.view = quad(0, 0, size.x, size.y);
-    __cam_abs.set_to_static_center();
-    __cam_abs.apply();
-    __cam_abs.viewport = __cam_abs.view;
-    return __cam_abs;
+        return P_cam_abs;
+    P_cam_abs.view = quad(0, 0, size.x, size.y);
+    P_cam_abs.set_to_static_center();
+    P_cam_abs.apply();
+    P_cam_abs.viewport = P_cam_abs.view;
+    return P_cam_abs;
 }
 
 camera &get_gui_camera(bool only_int, double fixed_resolution)
 {
     vec2 size = tk_get_size();
     if (size.x == 0 || size.y == 0)
-        return __cam_gui;
+        return P_cam_gui;
     double factor = fixed_resolution;
     if (fixed_resolution <= 0)
     {
@@ -130,18 +130,18 @@ camera &get_gui_camera(bool only_int, double fixed_resolution)
         if (only_int && int(factor * 2) % 2 != 0 && factor - 0.5 > 0)
             factor -= 0.5;
     }
-    __cam_gui.view = quad(0, 0, size.x / factor, size.y / factor);
-    __cam_gui.set_to_static_center();
-    __cam_gui.apply();
-    __cam_gui.viewport = quad(0, 0, size.x, size.y);
-    return __cam_gui;
+    P_cam_gui.view = quad(0, 0, size.x / factor, size.y / factor);
+    P_cam_gui.set_to_static_center();
+    P_cam_gui.apply();
+    P_cam_gui.viewport = quad(0, 0, size.x, size.y);
+    return P_cam_gui;
 }
 
 camera &get_world_camera(vec2 center, double sight_horizontal)
 {
     vec2 size = tk_get_size();
     if (size.x == 0 || size.y == 0)
-        return __cam_world;
+        return P_cam_world;
 
     double rt = 800.0 / 450.0;
     double fw, fh;
@@ -158,11 +158,11 @@ camera &get_world_camera(vec2 center, double sight_horizontal)
     }
 
     double x0 = (size.x - fw) / 2, y0 = (size.y - fh) / 2;
-    __cam_world.center = center;
-    __cam_world.view = {0, 0, sight_horizontal, sight_horizontal / rt};
-    __cam_world.apply();
-    __cam_world.viewport = {x0, y0, fw, fh};
-    return __cam_world;
+    P_cam_world.center = center;
+    P_cam_world.view = {0, 0, sight_horizontal, sight_horizontal / rt};
+    P_cam_world.apply();
+    P_cam_world.viewport = {x0, y0, fw, fh};
+    return P_cam_world;
 }
 
 } // namespace arcaie::gfx

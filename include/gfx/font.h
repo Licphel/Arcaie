@@ -1,21 +1,20 @@
 #pragma once
 #include <core/math.h>
-#include <core/math.h>
-#include <gfx/image.h>
 #include <gfx/brush.h>
+#include <gfx/image.h>
 #include <map>
 
 namespace arcaie::gfx
 {
 
-enum class font_render_align : long long
+enum class font_align : long
 {
-    LEFT = 1LL << 0,
-    RIGHT = 1LL << 1,
-    H_CENTER = 1LL << 2,
-    UP = 1LL << 3,
-    DOWN = 1LL << 4,
-    V_CENTER = 1LL << 5
+    LEFT = 1L << 0,
+    RIGHT = 1L << 1,
+    H_CENTER = 1L << 2,
+    UP = 1L << 3,
+    DOWN = 1L << 4,
+    V_CENTER = 1L << 5
 };
 
 struct glyph
@@ -47,13 +46,13 @@ struct font_render_bound
 struct font
 {
     std::map<u32_char, glyph> glyph_map;
-    double f_height = 0;
-    double f_lspc = 0;
-    double f_ascend = 0;
-    double f_descend = 0;
+    double height = 0;
+    double lspc = 0;
+    double ascend = 0;
+    double descend = 0;
 
-    struct _impl;
-    unique<_impl> __p;
+    struct P_impl;
+    unique<P_impl> P_pimpl;
 
     font();
     ~font();
@@ -66,12 +65,16 @@ struct font
     }
 
     glyph make_glyph(u32_char ch);
-    // draw the std::stringin the font, return the bounding box.
+    // draw the stringin the font, return the bounding box.
     // and if brush is nullptr, it won't draw anything, just calculating the bounding box.
-    font_render_bound make_vtx(brush *brush, const std::string &str, double x, double y, double scale = 1,
-                               double max_w = INT_MAX);
+    font_render_bound make_vtx(brush *brush, const std::string &str, double x, double y,
+                               bitmask<font_align> align = mask(font_align::UP, font_align::LEFT),
+                               double max_w = INT_MAX, double scale = 1);
+    font_render_bound make_vtx(brush *brush, const std::u32string &str, double x, double y,
+                               bitmask<font_align> align = mask(font_align::UP, font_align::LEFT),
+                               double max_w = INT_MAX, double scale = 1);
 };
 
-shared<font> load_font(const hio_path &path, double res_h, double pixel_h);
+shared<font> load_font(const path_handle &path, double res_h, double pixel_h);
 
 } // namespace arcaie::gfx

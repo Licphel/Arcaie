@@ -13,8 +13,8 @@ struct atlas
     shared<image> output_image = nullptr;
     shared<texture> output_texture = nullptr;
 
-    struct _impl;
-    unique<_impl> __p;
+    struct P_impl;
+    unique<P_impl> P_p;
 
     atlas(int w, int h);
     ~atlas();
@@ -29,4 +29,4 @@ struct atlas
 
 shared<atlas> make_atlas(int w, int h);
 
-} // namespace arcaie
+} // namespace arcaie::gfx

@@ -2,7 +2,7 @@
 #include <gfx/brush.h>
 #include <gfx/image.h>
 #include <gfx/font.h>
-#include <audi/device.h>
+#include <audio/device.h>
 #include <algorithm>
 #include <core/time.h>
 
@@ -16,7 +16,7 @@ struct gui_component
     quad region;
     std::function<void(quad &region, const quad &view)> locator;
     vec2 cursor_pos;
-    int __index_in_gui;
+    int P_index_in_gui;
     gui *parent;
 
     virtual ~gui_component() = default;
@@ -26,11 +26,11 @@ struct gui_component
 
 struct gui : std::enable_shared_from_this<gui>
 {
-    static std::vector<shared<gui>> CURRENTS;
+    static std::vector<shared<gui>> active_guis;
     static void render_currents(brush *brush);
     static void tick_currents();
 
-    std::vector<shared<gui_component>> __components;
+    std::vector<shared<gui_component>> P_components;
     std::function<void(gui &g)> on_closed;
     std::function<void(gui &g)> on_displayed;
     shared<gui_component> focus;
@@ -58,29 +58,29 @@ template <typename T, class... Args> shared<T> make_gui(Args &&...args)
     return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
-#define __SIDESCROLLER_SPEED 250
-#define __SIDESCROLLER_INF 2
-#define __CURSOR_SHINE_INTERVAL 0.6
+#define P_SIDESCROLLER_SPEED 250
+#define P_SIDESCROLLER_INF 2
+#define P_CURSOR_SHINE_INTERVAL 0.6
 
-struct __xside_scroller
+struct P_xside_scroller
 {
     gui_component *c;
-    double __acc;
+    double P_acc;
     double bx, by, bw, bh;
     bool is_dragging;
-    double __lcy, __sp0;
-    double __inflation = __SIDESCROLLER_INF;
-    double __prevp;
-    double __speed = __SIDESCROLLER_SPEED;
-    double pos = -__SIDESCROLLER_INF;
+    double P_lcy, P_sp0;
+    double P_inflation = P_SIDESCROLLER_INF;
+    double P_prevp;
+    double P_speed = P_SIDESCROLLER_SPEED;
+    double pos = -P_SIDESCROLLER_INF;
     double hsize;
-    std::function<void(brush *brush, __xside_scroller *cmp)> on_render;
+    std::function<void(brush *brush, P_xside_scroller *cmp)> on_render;
 
     void set_speed(double spd);
     void set_inflation(double otl);
     void to_top();
     void to_ground();
-    void __clamp();
+    void P_clamp();
     void tick();
     void render(brush *brush);
 };
@@ -98,7 +98,7 @@ struct gui_button : gui_component
     std::function<void()> on_click;
     std::function<void()> on_right_click;
     bool enable_switching = false;
-    button_state curstate = button_state::IDLE;
+    button_state state = button_state::IDLE;
 
     void render(brush *brush) override;
     void tick() override;
@@ -107,9 +107,9 @@ struct gui_button : gui_component
 struct gui_text_view : gui_component
 {
     bool enable_input = true;
-    std::string content;
-    __xside_scroller __scroller;
-    watch cursor_shiner = watch(__CURSOR_SHINE_INTERVAL, 0.5);
+    std::u32string content;
+    P_xside_scroller P_scroller;
+    watch cursor_shiner = watch(P_CURSOR_SHINE_INTERVAL, 0.5);
     // the background renderer.
     // the text renderer cannot be customized.
     std::function<void(brush *brush, gui_text_view *cmp)> on_render;

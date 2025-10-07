@@ -7,8 +7,8 @@ namespace arcaie
 
 struct random
 {
-    struct _impl;
-    unique<_impl> __p;
+    struct P_impl;
+    unique<P_impl> P_pimpl;
 
     random();
     ~random();

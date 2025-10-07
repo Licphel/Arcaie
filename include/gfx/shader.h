@@ -1,5 +1,5 @@
 #pragma once
-#include <core/hio.h>
+#include <core/io.h>
 #include <string>
 #include <gfx/color.h>
 #include <core/math.h>
@@ -19,7 +19,7 @@ enum class shader_vertex_data_type
 
 struct shader_attrib
 {
-    unsigned int __attrib_id = 0;
+    unsigned int P_attrib_id = 0;
 
     shader_attrib(unsigned int id);
 
@@ -28,7 +28,7 @@ struct shader_attrib
 
 struct shader_uniform
 {
-    unsigned int __uniform_id = 0;
+    unsigned int P_uniform_id = 0;
 
     shader_uniform(unsigned int id);
 
@@ -44,9 +44,9 @@ struct shader_uniform
 
 struct shader_program
 {
-    /* unstable */ unsigned int __program_id = 0;
+    /* unstable */ unsigned int P_program_id = 0;
     std::function<void(shared<shader_program> program)> callback_setup;
-    /* unstable */ bool __has_setup = false;
+    /* unstable */ bool P_has_setup = false;
     std::vector<shader_uniform> cached_uniforms;
 
     ~shader_program();

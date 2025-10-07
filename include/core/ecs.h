@@ -1,17 +1,17 @@
 #pragma once
-#include <core/uuid.h>
+#include <bitset>
 #include <core/buffer.h>
 #include <core/log.h>
-#include <lua/lua.h>
-#include <sol/sol.hpp>
-#include <bitset>
-#include <vector>
-#include <unordered_map>
-#include <memory>
+#include <core/uuid.h>
 #include <functional>
+#include <lua/lua.h>
+#include <memory>
+#include <sol/sol.hpp>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
-namespace arcaie::ecs
+namespace arcaie
 {
 
 using entity_ref = arcaie::uuid;
@@ -65,9 +65,9 @@ template <typename T> struct ecs_pool : ecs_pool_terased
     T *get(const entity_ref &e)
     {
         auto it = sparse.find(e);
-        if(it == sparse.end())
+        if (it == sparse.end())
             return nullptr;
-        auto& s = it->second;
+        auto &s = it->second;
         return (s.alive) ? &data[it->second.idx] : nullptr;
     }
 
@@ -76,10 +76,12 @@ template <typename T> struct ecs_pool : ecs_pool_terased
         auto it = sparse.find(e);
         if (it == sparse.end() || !it->second.alive)
             return;
+        // move the last slot to the removed one, ensuring no empty slots.
         size_t idx = it->second.idx;
-        dense[idx] = dense.back();
+        entity_ref tail = dense.back();
+        dense[idx] = tail;
         data[idx] = data.back();
-        sparse[dense[idx]].idx = idx;
+        sparse[tail].idx = idx;
         dense.pop_back();
         data.pop_back();
         sparse.erase(it);
@@ -100,13 +102,13 @@ template <typename T> struct ecs_pool : ecs_pool_terased
 
     void write(const entity_ref &e, arcaie::byte_buf &buf) override
     {
-        if (T* p = get(e))
+        if (T *p = get(e))
             p->write(buf);
     }
 
     void read(const entity_ref &e, arcaie::byte_buf &buf) override
     {
-        if (T* p = get(e))
+        if (T *p = get(e))
             p->read(buf);
     }
 
@@ -145,4 +147,4 @@ struct position
 };
 */
 
-} // namespace arcaie::ecs
+} // namespace arcaie

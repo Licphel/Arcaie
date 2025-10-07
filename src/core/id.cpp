@@ -3,15 +3,15 @@
 namespace arcaie
 {
 
-res_id::res_id() = default;
+unique_id::unique_id() = default;
 
-res_id::res_id(const std::string &cat)
+unique_id::unique_id(const std::string &cat)
 {
     auto pos = cat.find_last_of(':');
 
     if (pos == std::string::npos)
     {
-        key = pos == 0 ? cat.substr(1) : cat;
+        key = cat;
         scope = LIB_NAME;
         concat = LIB_NAME + cat;
     }
@@ -22,41 +22,41 @@ res_id::res_id(const std::string &cat)
         concat = cat;
     }
 
-    __hash = std::hash<std::string>{}(concat);
+    P_hash = std::hash<std::string>{}(concat);
 }
 
-res_id::res_id(const std::string &sc, const std::string &k)
+unique_id::unique_id(const std::string &sc, const std::string &k)
 {
     scope = sc;
     key = k;
     concat = sc + ":" + key;
-    __hash = std::hash<std::string>{}(concat);
+    P_hash = std::hash<std::string>{}(concat);
 }
 
-res_id::res_id(const char ch_arr[]) : res_id(std::string(ch_arr))
+unique_id::unique_id(const char ch_arr[]) : unique_id(std::string(ch_arr))
 {
 }
 
-hio_path res_id::find_path()
+path_handle unique_id::find_path()
 {
     if (scope == LIB_NAME)
-        return hio_open_local("") / key;
+        return io_open_local("") / key;
     return {}; // todo: add mod system
 }
 
-res_id::operator std::string() const
+unique_id::operator std::string() const
 {
     return concat;
 }
 
-bool res_id::operator==(const res_id &other) const
+bool unique_id::operator==(const unique_id &other) const
 {
-    if (other.__hash != __hash)
+    if (other.P_hash != P_hash)
         return false;
     return other.concat == concat;
 }
 
-bool res_id::operator<(const res_id &other) const
+bool unique_id::operator<(const unique_id &other) const
 {
     return other.concat < concat;
 }

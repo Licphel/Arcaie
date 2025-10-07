@@ -1,20 +1,24 @@
 #include <gfx/shader.h>
 #include <core/def.h>
 #include <memory>
-#include <gl/glew.h>
 #include <core/log.h>
 #include <functional>
+
+// clang-format off
+#include <gl/glew.h>
+#include <gl/gl.h>
+// clang-format on
 
 namespace arcaie::gfx
 {
 
-shader_attrib::shader_attrib(unsigned int id) : __attrib_id(id)
+shader_attrib::shader_attrib(unsigned int id) : P_attrib_id(id)
 {
 }
 
 void shader_attrib::layout(shader_vertex_data_type size, int components, int stride, int offset, bool normalize)
 {
-    glEnableVertexAttribArray(__attrib_id);
+    glEnableVertexAttribArray(P_attrib_id);
     GLenum type;
     switch (size)
     {
@@ -34,58 +38,58 @@ void shader_attrib::layout(shader_vertex_data_type size, int components, int str
         type = GL_UNSIGNED_BYTE;
         break;
     }
-    glVertexAttribPointer(__attrib_id, components, type, normalize, stride, reinterpret_cast<void *>(offset));
+    glVertexAttribPointer(P_attrib_id, components, type, normalize, stride, reinterpret_cast<void *>(offset));
 }
 
-shader_uniform::shader_uniform(unsigned int id) : __uniform_id(id)
+shader_uniform::shader_uniform(unsigned int id) : P_uniform_id(id)
 {
 }
 
 void shader_uniform::set_texture_unit(int unit)
 {
-    glUniform1i(__uniform_id, unit);
+    glUniform1i(P_uniform_id, unit);
 }
 
 void shader_uniform::seti(int v)
 {
-    glUniform1i(__uniform_id, v);
+    glUniform1i(P_uniform_id, v);
 }
 
 void shader_uniform::set(double v)
 {
-    glUniform1f(__uniform_id, v);
+    glUniform1f(P_uniform_id, v);
 }
 
 void shader_uniform::set(const vec2 &v)
 {
-    glUniform2f(__uniform_id, v.x, v.y);
+    glUniform2f(P_uniform_id, v.x, v.y);
 }
 
 void shader_uniform::set(const vec3 &v)
 {
-    glUniform3f(__uniform_id, v.x, v.y, v.z);
+    glUniform3f(P_uniform_id, v.x, v.y, v.z);
 }
 
 void shader_uniform::set(const color &v)
 {
-    glUniform4f(__uniform_id, v.r, v.g, v.b, v.a);
+    glUniform4f(P_uniform_id, v.r, v.g, v.b, v.a);
 }
 
 void shader_uniform::set(const transform &v)
 {
     float m[16] = {v.m00, v.m10, 0.0f, 0.0f, v.m01, v.m11, 0.0f, 0.0f,
                    0.0f,  0.0f,  1.0f, 0.0f, v.m02, v.m12, 0.0f, 1.0f};
-    glUniformMatrix4fv(__uniform_id, 1, GL_FALSE, m);
+    glUniformMatrix4fv(P_uniform_id, 1, GL_FALSE, m);
 }
 
 shader_program::~shader_program()
 {
-    glDeleteProgram(__program_id);
+    glDeleteProgram(P_program_id);
 }
 
 shader_attrib shader_program::get_attrib(const std::string &name)
 {
-    return shader_attrib((unsigned int)glGetAttribLocation(__program_id, name.c_str()));
+    return shader_attrib((unsigned int)glGetAttribLocation(P_program_id, name.c_str()));
 }
 
 shader_attrib shader_program::get_attrib(int index)
@@ -95,7 +99,7 @@ shader_attrib shader_program::get_attrib(int index)
 
 shader_uniform shader_program::get_uniform(const std::string &name)
 {
-    return shader_uniform((unsigned int)glGetUniformLocation(__program_id, name.c_str()));
+    return shader_uniform((unsigned int)glGetUniformLocation(P_program_id, name.c_str()));
 }
 
 shader_uniform shader_program::cache_uniform(const std::string &name)
@@ -105,12 +109,12 @@ shader_uniform shader_program::cache_uniform(const std::string &name)
     return uni;
 }
 
-static int __build_shader_part(std::string source, GLenum type)
+static int P_build_shader_part(std::string source, GLenum type)
 {
     int id = glCreateShader(type);
 
     if (id == 0)
-        prtlog_throw(ARC_FATAL, "Fail to create shader.");
+        arcthrow(ARC_FATAL, "Fail to create shader.");
 
     const char *src = source.c_str();
     GLint len = static_cast<GLint>(source.size());
@@ -125,7 +129,7 @@ static int __build_shader_part(std::string source, GLenum type)
         char log[512];
         glGetShaderInfoLog(id, sizeof(log), nullptr, log);
         glDeleteShader(id);
-        prtlog_throw(ARC_FATAL, "glsl compile error: {}", std::string(log));
+        arcthrow(ARC_FATAL, "glsl compile error: {}", std::string(log));
     }
 
     return id;
@@ -135,9 +139,9 @@ shared<shader_program> make_program(const std::string &vert, const std::string &
                                     std::function<void(shared<shader_program> program)> callback_setup)
 {
     shared<shader_program> program = std::make_shared<shader_program>();
-    int id = program->__program_id = glCreateProgram();
-    int vert_id = __build_shader_part(vert, GL_VERTEX_SHADER);
-    int frag_id = __build_shader_part(frag, GL_FRAGMENT_SHADER);
+    int id = program->P_program_id = glCreateProgram();
+    int vert_id = P_build_shader_part(vert, GL_VERTEX_SHADER);
+    int frag_id = P_build_shader_part(frag, GL_FRAGMENT_SHADER);
 
     glAttachShader(id, vert_id);
     glAttachShader(id, frag_id);
@@ -154,7 +158,7 @@ shared<shader_program> make_program(const std::string &vert, const std::string &
     return program;
 }
 
-static const std::string __dvert_textured = "#version 330 core\n"
+static const std::string P_dvert_textured = "#version 330 core\n"
                                             "layout(location = 0) in vec2 i_position;\n"
                                             "layout(location = 1) in vec4 i_color;\n"
                                             "layout(location = 2) in vec2 i_texCoord;\n"
@@ -167,7 +171,7 @@ static const std::string __dvert_textured = "#version 330 core\n"
                                             "    gl_Position = u_proj * vec4(i_position.x, i_position.y, 0.0, 1.0);\n"
                                             "}";
 
-static const std::string __dfrag_textured = "#version 330 core\n"
+static const std::string P_dfrag_textured = "#version 330 core\n"
                                             "in vec4 o_color;\n"
                                             "in vec2 o_texCoord;\n"
                                             "out vec4 fragColor;\n"
@@ -176,7 +180,7 @@ static const std::string __dfrag_textured = "#version 330 core\n"
                                             "    fragColor = o_color * texture(u_tex, o_texCoord);\n"
                                             "}";
 
-static const std::string __dvert_colored = "#version 330 core\n"
+static const std::string P_dvert_colored = "#version 330 core\n"
                                            "layout(location = 0) in vec2 i_position;\n"
                                            "layout(location = 1) in vec4 i_color;\n"
                                            "out vec4 o_color;\n"
@@ -186,20 +190,20 @@ static const std::string __dvert_colored = "#version 330 core\n"
                                            "    gl_Position = u_proj * vec4(i_position.x, i_position.y, 0.0, 1.0);\n"
                                            "}";
 
-static const std::string __dfrag_colored = "#version 330 core\n"
+static const std::string P_dfrag_colored = "#version 330 core\n"
                                            "in vec4 o_color;\n"
                                            "out vec4 fragColor;\n"
                                            "void main() {\n"
                                            "    fragColor = o_color;\n"
                                            "}";
 
-static shared<shader_program> __builtin_colored = nullptr, __builtin_textured = nullptr;
+static shared<shader_program> P_builtin_colored = nullptr, P_builtin_textured = nullptr;
 
 shared<shader_program> make_program(builtin_shader_type type)
 {
-    if (__builtin_colored == nullptr || __builtin_textured == nullptr)
+    if (P_builtin_colored == nullptr || P_builtin_textured == nullptr)
     {
-        __builtin_colored = make_program(__dvert_colored, __dfrag_colored, [](shared<shader_program> program) {
+        P_builtin_colored = make_program(P_dvert_colored, P_dfrag_colored, [](shared<shader_program> program) {
             program->get_attrib(0).layout(shader_vertex_data_type::FLOAT, 2, 16, 0);
             program->get_attrib(1).layout(shader_vertex_data_type::HALF_FLOAT, 4, 16, 8);
 
@@ -207,7 +211,7 @@ shared<shader_program> make_program(builtin_shader_type type)
                 return;
             program->cache_uniform("u_proj"); // 0
         });
-        __builtin_textured = make_program(__dvert_textured, __dfrag_textured, [](shared<shader_program> program) {
+        P_builtin_textured = make_program(P_dvert_textured, P_dfrag_textured, [](shared<shader_program> program) {
             program->get_attrib(0).layout(shader_vertex_data_type::FLOAT, 2, 24, 0);
             program->get_attrib(1).layout(shader_vertex_data_type::HALF_FLOAT, 4, 24, 8);
             program->get_attrib(2).layout(shader_vertex_data_type::FLOAT, 2, 24, 16);
@@ -221,9 +225,9 @@ shared<shader_program> make_program(builtin_shader_type type)
     switch (type)
     {
     case builtin_shader_type::COLORED:
-        return __builtin_colored;
+        return P_builtin_colored;
     case builtin_shader_type::TEXTURED:
-        return __builtin_textured;
+        return P_builtin_textured;
     }
     return nullptr;
 }

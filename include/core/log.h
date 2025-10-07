@@ -18,23 +18,23 @@ enum log_type
     ARC_FATAL = 3
 };
 
-inline static std::mutex __log_mutex;
+inline static std::mutex P_log_mutex;
 
-void __log_redirect();
-std::string __get_header(log_type type);
+void log_redirect();
+std::string P_get_header(log_type type);
 
-template <typename... Args> void prtlog(log_type type, const std::string &fmt, Args &&...args)
+template <typename... Args> void arclog(log_type type, const std::string &fmt, Args &&...args)
 {
-    std::lock_guard<std::mutex> lock(__log_mutex);
-    std::string formatted = __get_header(type) + fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
+    std::lock_guard<std::mutex> lock(P_log_mutex);
+    std::string formatted = P_get_header(type) + fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
     std::cout << formatted << std::endl;
     std::cout << std::flush;
 }
 
-template <typename... Args> [[noreturn]] void prtlog_throw(log_type type, const std::string &fmt, Args &&...args)
+template <typename... Args> [[noreturn]] void arcthrow(log_type type, const std::string &fmt, Args &&...args)
 {
-    std::lock_guard<std::mutex> lock(__log_mutex);
-    std::string formatted = __get_header(type) + fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
+    std::lock_guard<std::mutex> lock(P_log_mutex);
+    std::string formatted = P_get_header(type) + fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
     std::cout << formatted << std::endl;
     std::cout << std::flush;
     throw std::runtime_error(formatted);

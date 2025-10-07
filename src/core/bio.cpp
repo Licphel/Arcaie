@@ -3,46 +3,46 @@
 namespace arcaie
 {
 
-void __write_map(byte_buf &buf, const binary_map &map);
-void __write_array(byte_buf &buf, const binary_array &arr);
+void P_write_map(byte_buf &buf, const binary_map &map);
+void P_write_array(byte_buf &buf, const binary_array &arr);
 
-void __write_primitive(byte_buf &buf, const binary_value &v)
+void P_write_primitive(byte_buf &buf, const binary_value &v)
 {
-    buf.write<byte>(v.type);
+    buf.write<byte>((byte)v.type);
 
     switch (v.type)
     {
-    case __BIN_CVT_BYTE:
+    case P_bincvt::BYTE:
         buf.write<byte>(v.cast<byte>());
         break;
-    case __BIN_CVT_SHORT:
+    case P_bincvt::SHORT:
         buf.write<short>(v.cast<short>());
         break;
-    case __BIN_CVT_INT:
+    case P_bincvt::INT:
         buf.write<int>(v.cast<int>());
         break;
-    case __BIN_CVT_LONG:
+    case P_bincvt::LONG:
         buf.write<long>(v.cast<long>());
         break;
-    case __BIN_CVT_FLOAT:
+    case P_bincvt::FLOAT:
         buf.write<float>(v.cast<float>());
         break;
-    case __BIN_CVT_DOUBLE:
+    case P_bincvt::DOUBLE:
         buf.write<double>(v.cast<double>());
         break;
-    case __BIN_CVT_STRING_C:
+    case P_bincvt::STRING_C:
         buf.write_string(v.cast<std::string>());
         break;
-    case __BIN_CVT_BOOL:
+    case P_bincvt::BOOL:
         buf.write<bool>(v.cast<bool>());
         break;
-    case __BIN_CVT_MAP:
-        __write_map(buf, v.cast<binary_map>());
+    case P_bincvt::MAP:
+        P_write_map(buf, v.cast<binary_map>());
         break;
-    case __BIN_CVT_ARRAY:
-        __write_array(buf, v.cast<binary_array>());
+    case P_bincvt::ARRAY:
+        P_write_array(buf, v.cast<binary_array>());
         break;
-    case __BIN_CVT_BUF:
+    case P_bincvt::BUF:
         buf.write_byte_buf(v.cast<byte_buf>());
         break;
     default:
@@ -50,74 +50,74 @@ void __write_primitive(byte_buf &buf, const binary_value &v)
     }
 }
 
-void __write_map(byte_buf &buf, const binary_map &map)
+void P_write_map(byte_buf &buf, const binary_map &map)
 {
-    for (auto& kv : map.data)
+    for (auto &kv : map.data)
     {
         std::string str = kv.first;
         binary_value v = kv.second;
 
-        __write_primitive(buf, v);
+        P_write_primitive(buf, v);
         buf.write_string(str);
     }
 
-    buf.write<byte>(__BIN_CVT_EOF);
+    buf.write<byte>((byte)P_bincvt::MAP_ENDV);
 }
 
-void __write_array(byte_buf &buf, const binary_array &arr)
+void P_write_array(byte_buf &buf, const binary_array &arr)
 {
     buf.write<size_t>(arr.size());
-    for (auto& bv : arr.data)
-        __write_primitive(buf, bv);
+    for (auto &bv : arr.data)
+        P_write_primitive(buf, bv);
 }
 
-binary_map __read_map(byte_buf &buf);
-binary_array __read_array(byte_buf &buf);
+binary_map P_read_map(byte_buf &buf);
+binary_array P_read_array(byte_buf &buf);
 
-binary_value __read_primitive(byte_buf &buf)
+binary_value P_read_primitive(byte_buf &buf)
 {
-    byte id = buf.read<byte>();
+    P_bincvt id = (P_bincvt)buf.read<byte>();
 
-    if (id == __BIN_CVT_EOF)
-        return {__BIN_CVT_EOF, std::any(0)};
+    if (id == P_bincvt::MAP_ENDV)
+        return {P_bincvt::MAP_ENDV, std::any(0)};
 
     switch (id)
     {
-    case __BIN_CVT_BYTE:
+    case P_bincvt::BYTE:
         return binary_value::make(buf.read<byte>());
-    case __BIN_CVT_SHORT:
+    case P_bincvt::SHORT:
         return binary_value::make(buf.read<short>());
-    case __BIN_CVT_INT:
+    case P_bincvt::INT:
         return binary_value::make(buf.read<int>());
-    case __BIN_CVT_LONG:
+    case P_bincvt::LONG:
         return binary_value::make(buf.read<long>());
-    case __BIN_CVT_FLOAT:
+    case P_bincvt::FLOAT:
         return binary_value::make(buf.read<float>());
-    case __BIN_CVT_DOUBLE:
+    case P_bincvt::DOUBLE:
         return binary_value::make(buf.read<double>());
-    case __BIN_CVT_STRING_C:
+    case P_bincvt::STRING_C:
         return binary_value::make(buf.read_string());
-    case __BIN_CVT_BOOL:
+    case P_bincvt::BOOL:
         return binary_value::make(buf.read<bool>());
-    case __BIN_CVT_MAP:
-        return binary_value::make(__read_map(buf));
-    case __BIN_CVT_ARRAY:
-        return binary_value::make(__read_array(buf));
-    case __BIN_CVT_BUF:
+    case P_bincvt::MAP:
+        return binary_value::make(P_read_map(buf));
+    case P_bincvt::ARRAY:
+        return binary_value::make(P_read_array(buf));
+    case P_bincvt::BUF:
         return binary_value::make(buf.read_byte_buf());
     }
 
-    prtlog_throw(ARC_FATAL, "unknown binary id.");
+    arcthrow(ARC_FATAL, "unknown binary id.");
 }
 
-binary_map __read_map(byte_buf &buf)
+binary_map P_read_map(byte_buf &buf)
 {
     binary_map map;
     while (true)
     {
-        binary_value bv = __read_primitive(buf);
+        binary_value bv = P_read_primitive(buf);
 
-        if (bv.type == __BIN_CVT_EOF)
+        if (bv.type == P_bincvt::MAP_ENDV)
             break;
 
         std::string str = buf.read_string();
@@ -126,106 +126,106 @@ binary_map __read_map(byte_buf &buf)
     return map;
 }
 
-binary_array __read_array(byte_buf &buf)
+binary_array P_read_array(byte_buf &buf)
 {
     size_t size = buf.read<size_t>();
     binary_array arr;
     while (size-- > 0)
-        arr.data.push_back(__read_primitive(buf));
+        arr.data.push_back(P_read_primitive(buf));
     return arr;
 }
 
 binary_map bio_read_buf(byte_buf &v)
 {
-    return __read_map(v);
+    return P_read_map(v);
 }
 
 byte_buf bio_write_buf(const binary_map &map)
 {
     byte_buf buf;
-    __write_map(buf, map);
+    P_write_map(buf, map);
     return buf;
 }
 
-binary_map bio_read(const hio_path &path)
+binary_map bio_read(const path_handle &path)
 {
-    byte_buf buf = byte_buf(hio_read_bytes(path, compression_level::DCMP_READ));
+    byte_buf buf = byte_buf(io_read_bytes(path, io_compression_level::DCMP_READ));
     return bio_read_buf(buf);
 }
 
-void bio_write(const binary_map &map, const hio_path &path)
+void bio_write(const binary_map &map, const path_handle &path)
 {
-    hio_write_bytes(path, bio_write_buf(map).to_vector(), compression_level::OPTIMAL);
+    io_write_bytes(path, bio_write_buf(map).to_vector(), io_compression_level::OPTIMAL);
 }
 
-class __binparser
+class P_binparser
 {
   private:
     std::string input;
     size_t pos;
 
-    void __skipspace()
+    void P_skipspace()
     {
         while (pos < input.size() && std::isspace(input[pos]))
             pos++;
     }
 
-    char __cur_ch()
+    char P_cur_ch()
     {
         return (pos < input.size()) ? input[pos] : '\0';
     }
 
-    char __nxt()
+    char P_nxt()
     {
         pos++;
-        return __cur_ch();
+        return P_cur_ch();
     }
 
-    binary_value __p_value();
-    binary_value __p_bool();
-    binary_value __p_num();
-    std::string __p_key();
-    binary_value __p_str();
-    binary_value __p_arr();
-    binary_value __p_map();
+    binary_value P_parse_value();
+    binary_value P_parse_bool();
+    binary_value P_parse_num();
+    std::string P_parse_key();
+    binary_value P_parse_str();
+    binary_value P_parse_arr();
+    binary_value P_parse_map();
 
   public:
-    __binparser(const std::string &str) : input(str), pos(0)
+    P_binparser(const std::string &str) : input(str), pos(0)
     {
-        __skipspace();
-        while (__cur_ch() != '{')
-            __nxt();
+        P_skipspace();
+        while (P_cur_ch() != '{')
+            P_nxt();
     }
 
-    binary_value __p()
+    binary_value P_parse()
     {
-        __skipspace();
-        return __p_value();
+        P_skipspace();
+        return P_parse_value();
     }
 };
 
-binary_value __binparser::__p_value()
+binary_value P_binparser::P_parse_value()
 {
-    __skipspace();
-    char c = __cur_ch();
+    P_skipspace();
+    char c = P_cur_ch();
 
     if (c == 'n')
-        prtlog_throw(ARC_FATAL, "cannot use a null value");
+        arcthrow(ARC_FATAL, "cannot use a null value");
     if (c == 't' || c == 'f')
-        return __p_bool();
+        return P_parse_bool();
     if (c == '"')
-        return __p_str();
+        return P_parse_str();
     if (c == '[')
-        return __p_arr();
+        return P_parse_arr();
     if (c == '{')
-        return __p_map();
+        return P_parse_map();
     if (c == '-' || (c >= '0' && c <= '9'))
-        return __p_num();
+        return P_parse_num();
 
-    prtlog_throw(ARC_FATAL, "unexpected character at position " + pos);
+    arcthrow(ARC_FATAL, "unexpected character at position " + pos);
 }
 
-binary_value __binparser::__p_bool()
+binary_value P_binparser::P_parse_bool()
 {
     if (input.substr(pos, 4) == "true")
     {
@@ -237,33 +237,33 @@ binary_value __binparser::__p_bool()
         pos += 5;
         return binary_value::make(false);
     }
-    prtlog_throw(ARC_FATAL, "expected boolean at position " + pos);
+    arcthrow(ARC_FATAL, "expected boolean at position " + pos);
 }
 
-binary_value __binparser::__p_num()
+binary_value P_binparser::P_parse_num()
 {
     size_t start = pos;
 
-    if (__cur_ch() == '-')
-        __nxt();
+    if (P_cur_ch() == '-')
+        P_nxt();
 
     while (pos < input.size() && std::isdigit(input[pos]))
-        __nxt();
+        P_nxt();
 
-    if (__cur_ch() == '.')
+    if (P_cur_ch() == '.')
     {
-        __nxt();
+        P_nxt();
         while (pos < input.size() && std::isdigit(input[pos]))
-            __nxt();
+            P_nxt();
     }
 
-    if (__cur_ch() == 'e' || __cur_ch() == 'E')
+    if (P_cur_ch() == 'e' || P_cur_ch() == 'E')
     {
-        __nxt();
-        if (__cur_ch() == '+' || __cur_ch() == '-')
-            __nxt();
+        P_nxt();
+        if (P_cur_ch() == '+' || P_cur_ch() == '-')
+            P_nxt();
         while (pos < input.size() && std::isdigit(input[pos]))
-            __nxt();
+            P_nxt();
     }
 
     std::string numStr = input.substr(start, pos - start);
@@ -271,34 +271,34 @@ binary_value __binparser::__p_num()
     return binary_value::make(value);
 }
 
-std::string __binparser::__p_key()
+std::string P_binparser::P_parse_key()
 {
     std::string result;
-    while (pos < input.size() && __cur_ch() != '=')
+    while (pos < input.size() && P_cur_ch() != '=')
     {
-        char ch = __cur_ch();
+        char ch = P_cur_ch();
         if (!std::isspace(ch))
             result += ch;
-        __nxt();
+        P_nxt();
     }
     return result;
 }
 
-binary_value __binparser::__p_str()
+binary_value P_binparser::P_parse_str()
 {
-    if (__cur_ch() != '"')
-        prtlog_throw(ARC_FATAL, "expected '\"' at position " + pos);
-    __nxt();
+    if (P_cur_ch() != '"')
+        arcthrow(ARC_FATAL, "expected '\"' at position " + pos);
+    P_nxt();
 
     std::string result;
-    while (pos < input.size() && __cur_ch() != '"')
+    while (pos < input.size() && P_cur_ch() != '"')
     {
-        char c = __cur_ch();
+        char c = P_cur_ch();
 
         if (c == '\\')
         {
-            __nxt();
-            c = __cur_ch();
+            P_nxt();
+            c = P_cur_ch();
             switch (c)
             {
             case '"':
@@ -326,10 +326,10 @@ binary_value __binparser::__p_str()
                 result += '\t';
                 break;
             case 'u':
-                __nxt();
+                P_nxt();
                 for (int i = 0; i < 4 && pos < input.size(); i++)
                 {
-                    __nxt();
+                    P_nxt();
                 }
                 result += '?';
                 break;
@@ -340,100 +340,100 @@ binary_value __binparser::__p_str()
         }
         else
             result += c;
-        __nxt();
+        P_nxt();
     }
 
-    if (__cur_ch() != '"')
-        prtlog_throw(ARC_FATAL, "unterminated std::stringat position " + pos);
-    __nxt();
+    if (P_cur_ch() != '"')
+        arcthrow(ARC_FATAL, "unterminated std::stringat position " + pos);
+    P_nxt();
 
     return binary_value::make(result);
 }
 
-binary_value __binparser::__p_arr()
+binary_value P_binparser::P_parse_arr()
 {
-    if (__cur_ch() != '[')
-        prtlog_throw(ARC_FATAL, "expected '[' at position " + pos);
-    __nxt();
+    if (P_cur_ch() != '[')
+        arcthrow(ARC_FATAL, "expected '[' at position " + pos);
+    P_nxt();
 
     binary_array result;
-    __skipspace();
+    P_skipspace();
 
-    if (__cur_ch() == ']')
+    if (P_cur_ch() == ']')
     {
-        __nxt();
+        P_nxt();
         return binary_value::make(result);
     }
 
     while (pos < input.size())
     {
-        result.data.push_back(__p_value());
+        result.data.push_back(P_parse_value());
 
-        __skipspace();
-        if (__cur_ch() == ']')
+        P_skipspace();
+        if (P_cur_ch() == ']')
             break;
-        if (__cur_ch() != ',')
-            prtlog_throw(ARC_FATAL, "expected ',' or ']' in array at position " + pos);
-        __nxt();
-        __skipspace();
+        if (P_cur_ch() != ',')
+            arcthrow(ARC_FATAL, "expected ',' or ']' in array at position " + pos);
+        P_nxt();
+        P_skipspace();
     }
 
-    if (__cur_ch() != ']')
-        prtlog_throw(ARC_FATAL, "unterminated array at position " + pos);
-    __nxt();
+    if (P_cur_ch() != ']')
+        arcthrow(ARC_FATAL, "unterminated array at position " + pos);
+    P_nxt();
 
     return binary_value::make(result);
 }
 
-binary_value __binparser::__p_map()
+binary_value P_binparser::P_parse_map()
 {
-    if (__cur_ch() != '{')
-        prtlog_throw(ARC_FATAL, "expected '{' at position " + pos);
-    __nxt();
+    if (P_cur_ch() != '{')
+        arcthrow(ARC_FATAL, "expected '{' at position " + pos);
+    P_nxt();
 
     binary_map result;
-    __skipspace();
+    P_skipspace();
 
-    if (__cur_ch() == '}')
+    if (P_cur_ch() == '}')
     {
-        __nxt();
+        P_nxt();
         return binary_value::make(result);
     }
 
     while (pos < input.size())
     {
-        __skipspace();
-        std::string key = __p_key();
-        __skipspace();
-        if (__cur_ch() != '=')
-            prtlog_throw(ARC_FATAL, "expected '=' after object key at position " + pos);
-        __nxt();
+        P_skipspace();
+        std::string key = P_parse_key();
+        P_skipspace();
+        if (P_cur_ch() != '=')
+            arcthrow(ARC_FATAL, "expected '=' after object key at position " + pos);
+        P_nxt();
 
-        binary_value value = __p_value();
+        binary_value value = P_parse_value();
         result.data[key] = value;
 
-        __skipspace();
+        P_skipspace();
 
-        if (__cur_ch() == '}')
+        if (P_cur_ch() == '}')
             break;
-        if (__cur_ch() != ',')
-            prtlog_throw(ARC_FATAL, "expected ',' or '}' in object at position " + pos);
+        if (P_cur_ch() != ',')
+            arcthrow(ARC_FATAL, "expected ',' or '}' in object at position " + pos);
 
-        __nxt();
+        P_nxt();
     }
 
-    if (__cur_ch() != '}')
-        prtlog_throw(ARC_FATAL, "unterminated object at position " + pos);
-    __nxt();
+    if (P_cur_ch() != '}')
+        arcthrow(ARC_FATAL, "unterminated object at position " + pos);
+    P_nxt();
 
     return binary_value::make(result);
 }
 
-binary_map bio_read_langd(const hio_path &path)
+binary_map bio_read_langd(const path_handle &path)
 {
-    binary_value result = __binparser(hio_read_str(path)).__p();
-    if (result.type != __BIN_CVT_MAP)
-        prtlog_throw(ARC_FATAL, "binary root is not an object");
+    binary_value result = P_binparser(io_read_str(path)).P_parse();
+    if (result.type != P_bincvt::MAP)
+        arcthrow(ARC_FATAL, "binary root is not an object");
     return result.cast<binary_map>();
 }
 

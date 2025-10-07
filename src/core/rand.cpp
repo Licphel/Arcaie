@@ -4,12 +4,12 @@
 namespace arcaie
 {
 
-struct random::_impl
+struct random::P_impl
 {
     long a, b;
 };
 
-random::random() : __p(std::make_unique<_impl>())
+random::random() : P_pimpl(std::make_unique<P_impl>())
 {
 }
 
@@ -17,8 +17,8 @@ random::~random() = default;
 
 void random::set_seed(long seed)
 {
-    __p->a = (seed + 13) / 2;
-    __p->b = (seed - 9) ^ 39;
+    P_pimpl->a = (seed + 13) / 2;
+    P_pimpl->b = (seed - 9) ^ 39;
 }
 
 bool random::next_bool()
@@ -28,7 +28,7 @@ bool random::next_bool()
 
 double random::next()
 {
-    static std::mt19937_64 rng{std::random_device{}()};
+    thread_local static std::mt19937_64 rng{std::random_device{}()};
     std::uniform_real_distribution<double> dist(0.0, 1.0);
     return dist(rng);
 }
@@ -54,7 +54,7 @@ double random::next_guassian(double min, double max)
 
 int random::next_int(int bound)
 {
-    static std::mt19937_64 rng{std::random_device{}()};
+    thread_local static std::mt19937_64 rng{std::random_device{}()};
     std::uniform_int_distribution<int> dist(0, bound - 1);
     return dist(rng);
 }
@@ -66,14 +66,14 @@ int random::next_int(int min, int max)
 
 void random::write(byte_buf &buf)
 {
-    buf.write<long>(__p->a);
-    buf.write<long>(__p->b);
+    buf.write<long>(P_pimpl->a);
+    buf.write<long>(P_pimpl->b);
 }
 
 void random::read(byte_buf &buf)
 {
-    __p->a = buf.read<long>();
-    __p->b = buf.read<long>();
+    P_pimpl->a = buf.read<long>();
+    P_pimpl->b = buf.read<long>();
 }
 
 shared<random> random::copy()
@@ -84,21 +84,21 @@ shared<random> random::copy()
 shared<random> random::copy(int seed_addon)
 {
     auto ptr = std::make_shared<random>();
-    ptr->__p->a = __p->a + seed_addon;
-    ptr->__p->b = __p->b - seed_addon;
+    ptr->P_pimpl->a = P_pimpl->a + seed_addon;
+    ptr->P_pimpl->b = P_pimpl->b - seed_addon;
     return ptr;
 }
 
-shared<random> __grand = make_random();
+shared<random> P_grand = make_random();
 
 shared<random> get_grand()
 {
-    return __grand;
+    return P_grand;
 }
 
 shared<random> make_random()
 {
-    static std::mt19937_64 rng{std::random_device{}()};
+    thread_local static std::mt19937_64 rng{std::random_device{}()};
     std::uniform_int_distribution<int> dist(0, INT_MAX);
     return make_random(dist(rng));
 }
@@ -110,7 +110,7 @@ shared<random> make_random(long seed)
     return ptr;
 }
 
-struct __noise_perlin : noise
+struct P_noise_perlin : noise
 {
     int p[512];
 
@@ -212,7 +212,7 @@ struct __noise_perlin : noise
     }
 };
 
-struct __noise_voronoi : noise
+struct P_noise_voronoi : noise
 {
     inline int floor(double v)
     {
@@ -265,7 +265,7 @@ struct __noise_voronoi : noise
 
 shared<noise> make_perlin(long seed)
 {
-    auto ptr = std::make_shared<__noise_perlin>();
+    auto ptr = std::make_shared<P_noise_perlin>();
     ptr->seed = seed;
     ptr->init();
     return ptr;
@@ -273,7 +273,7 @@ shared<noise> make_perlin(long seed)
 
 shared<noise> make_voronoi(long seed)
 {
-    auto ptr = std::make_shared<__noise_voronoi>();
+    auto ptr = std::make_shared<P_noise_voronoi>();
     ptr->seed = seed;
     return ptr;
 }

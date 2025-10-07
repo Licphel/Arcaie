@@ -1,17 +1,15 @@
 #pragma once
-#include <ecs/sys.h>
-
-using namespace arcaie::ecs;
+#include <core/ecs.h>
 
 namespace arcaie::world
 {
 
 struct level
 {
-    using __sysfn = std::function<void(level &)>;
+    using P_sysfn = std::function<void(level &)>;
 
-    std::unordered_map<std::string, shared<ecs_pool_terased>> __ecs_pools;
-    std::vector<__sysfn> __ecs_syses[ECS_PHASE_COUNT];
+    std::unordered_map<std::string, shared<ecs_pool_terased>> P_ecs_pools;
+    std::vector<P_sysfn> P_ecs_syses[ECS_PHASE_COUNT];
 
     entity_ref make_entity()
     {
@@ -21,17 +19,17 @@ struct level
 
     void destroy_entity(const entity_ref &e)
     {
-        for (auto& kv : __ecs_pools)
+        for (auto &kv : P_ecs_pools)
             kv.second->remove(e);
     }
 
     template <typename T> ecs_pool<T> *get_pool(const std::string &k)
     {
-        auto it = __ecs_pools.find(k);
-        if (it == __ecs_pools.end())
+        auto it = P_ecs_pools.find(k);
+        if (it == P_ecs_pools.end())
         {
-            __ecs_pools[k] = std::make_shared<ecs_pool<T>>();
-            it = __ecs_pools.find(k);
+            P_ecs_pools[k] = std::make_shared<ecs_pool<T>>();
+            it = P_ecs_pools.find(k);
         }
         return static_cast<ecs_pool<T> *>(it->second.get());
     }
@@ -54,12 +52,12 @@ struct level
 
     template <typename F> void add_system(ecs_phase ph, F &&f)
     {
-        __ecs_syses[int(ph)].emplace_back(std::forward<F>(f));
+        P_ecs_syses[int(ph)].emplace_back(std::forward<F>(f));
     }
 
     void tick_phase(ecs_phase ph)
     {
-        for (auto &sys : __ecs_syses[int(ph)])
+        for (auto &sys : P_ecs_syses[int(ph)])
             sys(*this);
     }
 

@@ -1,8 +1,8 @@
-#include <core/uuid.h>
 #include <chrono>
-#include <random>
 #include <core/def.h>
+#include <core/uuid.h>
 #include <cstring>
+#include <random>
 
 namespace arcaie
 {
@@ -42,20 +42,26 @@ uuid uuid_generate()
 {
     uuid u;
 
+    // generate a timestamp to higher 8 bytes
     auto now = std::chrono::high_resolution_clock::now();
-    auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
+    uint64_t ns = static_cast<uint64_t>(now.time_since_epoch().count()) & 0x0FFFFFFFFFFFFFFF;
 
-    for (int i = 0; i < 8; i++)
-        u.bytes[i] = (ns >> (56 - i * 8)) & 0xFF;
+    // generate a random number to lower 8 bytes
+    thread_local static std::random_device rd;
+    thread_local static std::mt19937_64 rng(rd());
+    std::uniform_int_distribution<uint64_t> dist;
 
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    static std::uniform_int_distribution<int> dis(0, 255);
+    uint64_t rand_lo = dist(rng);
+    uint64_t rand_hi = dist(rng);
 
-    for (int i = 8; i < 16; i++)
-        u.bytes[i] = dis(gen);
+    struct alignas(16) uuid_raw
+    {
+        uint64_t hi;
+        uint64_t lo;
+    } raw = {ns, rand_lo ^ rand_hi};
 
-    u.__hash = std::hash<std::string_view>{}(std::string_view(reinterpret_cast<const char *>(u.bytes), 16));
+    std::memcpy(&u, &raw, 16);
+    u.P_hash = std::hash<uint64_t>{}(raw.hi) ^ (std::hash<uint64_t>{}(raw.lo) << 1);
 
     return u;
 }

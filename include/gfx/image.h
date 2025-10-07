@@ -1,5 +1,5 @@
 #pragma once
-#include <core/hio.h>
+#include <core/io.h>
 #include <core/def.h>
 #include <core/math.h>
 
@@ -12,7 +12,7 @@ struct image
 {
     int width, height;
     byte *pixels;
-    /* unstable */ bool __is_from_stb = false;
+    /* unstable */ bool P_is_from_stb = false;
 
     image();
     image(byte *data, int w, int h);
@@ -27,9 +27,9 @@ struct texture
     int height = 0;
     int fwidth = 0;
     int fheight = 0;
-    /* maybe nullptr */ shared<image> __relying_image = nullptr;
-    /* unstable */ unsigned int __texture_id = 0;
-    /* unstable */ bool __is_framebuffer;
+    /* maybe nullptr */ shared<image> P_relying_image = nullptr;
+    /* unstable */ unsigned int P_texture_id = 0;
+    /* unstable */ bool P_is_framebuffer;
     shared<texture> root = nullptr;
 
     ~texture();
@@ -51,7 +51,7 @@ struct texture_parameters
     texture_parameter mag_filter = texture_parameter::FILTER_NEAREST;
 };
 
-shared<image> load_image(const hio_path &path);
+shared<image> load_image(const path_handle &path);
 shared<image> make_image(int width, int height, byte *data);
 shared<texture> make_texture(shared<image> img);
 void set_texture_parameters(shared<texture> tex, texture_parameters param);
@@ -75,7 +75,7 @@ struct nine_patches
     double tw;
     // enable overlapping can make the size control of nine-patches more accurate.
     // however, if your texture contains some transparent parts, it's better to turn it off.
-    bool __enable_overlapping = true;
+    bool P_enable_overlapping = true;
 
     nine_patches();
     nine_patches(shared<texture> tex);

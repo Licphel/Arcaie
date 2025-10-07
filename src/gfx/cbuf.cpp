@@ -1,7 +1,10 @@
 #include <gfx/cbuf.h>
+#include <memory>
+
+// clang-format off
 #include <gl/glew.h>
 #include <gl/gl.h>
-#include <memory>
+// clang-format on
 
 namespace arcaie::gfx
 {
@@ -16,7 +19,7 @@ void complex_buffer::end_quad()
     if (old + s > index_buf.capacity())
     {
         index_buf.reserve(index_buf.capacity() * 2);
-        __icap_changed = true;
+        P_icap_changed = true;
     }
 
     unsigned int k = vertex_count - 4;
@@ -53,4 +56,4 @@ shared<complex_buffer> make_buffer()
     return std::make_shared<complex_buffer>();
 }
 
-} // namespace arcaie
+} // namespace arcaie::gfx

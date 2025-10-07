@@ -45,4 +45,4 @@ camera &get_gui_camera(bool only_int = false, double fixed_resolution = -1);
 // vertical sight range is unsure, because the ratio varies from device to device.
 camera &get_world_camera(vec2 center, double sight_horizontal);
 
-} // namespace arcaie
+} // namespace arcaie::gfx

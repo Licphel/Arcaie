@@ -2,7 +2,7 @@
 #include <gfx/image.h>
 #include <gfx/device.h>
 #include <core/log.h>
-#include <audi/device.h>
+#include <audio/device.h>
 #include <gfx/atlas.h>
 #include <gfx/mesh.h>
 #include <gfx/font.h>
@@ -22,10 +22,9 @@
 using namespace arcaie;
 using namespace arcaie::gfx;
 using namespace arcaie::net;
-using namespace arcaie::audi;
+using namespace arcaie::audio;
 using namespace arcaie::lua;
 using namespace arcaie::world;
-using namespace arcaie::ecs;
 
 int i;
 socket &sockc = get_gsocket_remote();
@@ -67,7 +66,7 @@ int main()
     entity_ref eref3 = elvl->make_entity();
     elvl->add_system(ecs_phase::COMMON, [](level &lvl) {
         elvl->each<posic>("position",
-                          [lvl](const entity_ref &ref, posic &cmp) { prtlog(ARC_INFO, std::to_string(cmp.x)); });
+                          [lvl](const entity_ref &ref, posic &cmp) { arclog(ARC_INFO, std::to_string(cmp.x)); });
     });
     elvl->add_component("position", eref1, posic{1.5, 3.5});
     elvl->add_component("position", eref2, posic{2.5, 3.5});
@@ -76,16 +75,16 @@ int main()
     auto *pool = elvl->get_pool<posic>("position");
     auto *cmp = pool->get(eref2);
 
-    __log_redirect();
+    log_redirect();
 
     lua_make_state();
     lua_bind_modules();
-    lua_eval(hio_read_str(hio_open_local("main.lua")));
+    lua_eval(io_read_str(io_open_local("main.lua")));
     register_packet<packet_2s_heartbeat>();
     register_packet<packet_dummy>();
 
-    fnt = load_font(hio_open_local("gfx/font/main.ttf"), 32, 12);
-    auto tex = make_texture(load_image(hio_open_local("gfx/misc/test.png")));
+    fnt = load_font(io_open_local("gfx/font/main.ttf"), 32, 12);
+    auto tex = make_texture(load_image(io_open_local("gfx/misc/test.png")));
     pct = nine_patches(tex);
 
     g = make_gui<gui>();
@@ -95,16 +94,16 @@ int main()
         region = quad::center(view.center_x(), view.center_y(), 200, 40);
     };
     b->on_render = [](brush *brush, gui_button *cmp) {
-        if (cmp->curstate == button_state::IDLE)
+        if (cmp->state == button_state::IDLE)
             brush->cl_set(color(1, 1, 1, 1));
-        else if (cmp->curstate == button_state::HOVERING)
+        else if (cmp->state == button_state::HOVERING)
             brush->cl_set(color(0.8, 0.8, 1, 1));
-        else if (cmp->curstate == button_state::PRESSED)
+        else if (cmp->state == button_state::PRESSED)
             brush->cl_set(color(0.6, 0.6, 1, 1));
         pct.make_vtx(brush, b->region);
         brush->cl_norm();
     };
-    b->on_click = []() { prtlog(ARC_INFO, "clicked!"); };
+    b->on_click = []() { arclog(ARC_INFO, "clicked!"); };
     g->join(b);
 
     tv = make_gui_component<gui_text_view>();

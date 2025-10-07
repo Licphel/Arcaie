@@ -6,7 +6,7 @@ namespace arcaie
 struct watch
 {
     double interval;
-    double __timestamp;
+    double P_timestamp;
     double accp;
 
     watch(double interval);
@@ -22,9 +22,9 @@ struct clock
     long render_ticks;
     double seconds;
 
-    static clock& now();
+    static clock &now();
 };
 
 double lerp(double old, double now);
 
-}
+} // namespace arcaie

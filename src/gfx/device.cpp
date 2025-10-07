@@ -1,47 +1,50 @@
+#include <al/al.h>
+#include <al/alc.h>
 #include <algorithm>
 #include <chrono>
+#include <core/log.h>
+#include <core/time.h>
 #include <gfx/brush.h>
-#include <gfx/image.h>
 #include <gfx/device.h>
+#include <gfx/image.h>
+#include <gfx/mesh.h>
+#include <thread>
+#include <vector>
+
+// clang-format off
 #include <gl/glew.h>
 #include <gl/gl.h>
 #include <glfw/glfw3.h>
-#include <al/alc.h>
-#include <al/al.h>
-#include <core/log.h>
-#include <thread>
-#include <vector>
-#include <gfx/mesh.h>
-#include <core/time.h>
+// clang-format on
 
 namespace arcaie::gfx
 {
 
-GLFWwindow *window;
+static GLFWwindow *window;
 
-std::vector<std::function<void()>> event_tick;
-std::vector<std::function<void(brush *brush)>> event_render;
-std::vector<std::function<void()>> event_dispose;
-std::vector<std::function<void(int w, int h)>> event_resize;
-std::vector<std::function<void(int button, int action, int mods)>> event_mouse_state;
-std::vector<std::function<void(double x, double y)>> event_cursor_pos;
-std::vector<std::function<void(double x, double y)>> event_mouse_scroll;
-std::vector<std::function<void(int button, int scancode, int action, int mods)>> event_key_state;
+static std::vector<std::function<void()>> event_tick;
+static std::vector<std::function<void(brush *brush)>> event_render;
+static std::vector<std::function<void()>> event_dispose;
+static std::vector<std::function<void(int w, int h)>> event_resize;
+static std::vector<std::function<void(int button, int action, int mods)>> event_mouse_state;
+static std::vector<std::function<void(double x, double y)>> event_cursor_pos;
+static std::vector<std::function<void(double x, double y)>> event_mouse_scroll;
+static std::vector<std::function<void(int button, int scancode, int action, int mods)>> event_key_state;
 
-long keydown[512];
-long keydown_render[512];
-char keymod[512];
-char keyact[512];
-double mcx, mcy;
-double mscx, mscy;
-int rfps, rtps;
-bool __cur_in_tick;
-std::string __char_seq;
+static long keydown[512];
+static long keydown_render[512];
+static char keymod[512];
+static char keyact[512];
+static double mcx, mcy;
+static double mscx, mscy;
+static int rfps, rtps;
+static bool P_cur_in_tick;
+static std::string P_char_seq;
+static bool P_just_ticked;
 
-// global gfx usage
-shared<mesh> direct_mesh = nullptr;
+static shared<mesh> direct_mesh = nullptr;
 
-double __nanos()
+double P_nanos()
 {
     return glfwGetTime() * 1'000'000'000;
 }
@@ -59,7 +62,7 @@ int tk_real_tps()
 void tk_make_handle()
 {
     if (!glfwInit())
-        prtlog_throw(ARC_FATAL, "glfw cannot initialize.");
+        arcthrow(ARC_FATAL, "glfw cannot initialize.");
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
@@ -72,21 +75,21 @@ void tk_make_handle()
     if (window == NULL)
     {
         glfwTerminate();
-        prtlog_throw(ARC_FATAL, "glfw make window failed.");
+        arcthrow(ARC_FATAL, "glfw make window failed.");
     }
 
     glfwMakeContextCurrent(window);
 
     if (glewInit() != GLEW_OK)
-        prtlog_throw(ARC_FATAL, "glew cannot initialize.");
+        arcthrow(ARC_FATAL, "glew cannot initialize.");
 
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int nw, int nh) {
-        for (auto& e : event_resize)
+        for (auto &e : event_resize)
             e(nw, nh);
     });
     glfwSetMouseButtonCallback(window, [](GLFWwindow *, int button, int action, int mods) {
         button += 480; /* **magic number** _TK_MOUSE_OFFSET */
-        for (auto& e : event_mouse_state)
+        for (auto &e : event_mouse_state)
             e(button, action, mods);
         keydown[button] = clock::now().ticks;
         keydown_render[button] = clock::now().render_ticks;
@@ -94,13 +97,13 @@ void tk_make_handle()
         keymod[button] = mods;
     });
     glfwSetScrollCallback(window, [](GLFWwindow *, double x, double y) {
-        for (auto& e : event_mouse_scroll)
+        for (auto &e : event_mouse_scroll)
             e(x, y);
         mscx = x;
         mscy = y;
     });
     glfwSetCursorPosCallback(window, [](GLFWwindow *, double x, double y) {
-        for (auto& e : event_cursor_pos)
+        for (auto &e : event_cursor_pos)
             e(x, y);
         mcx = x;
 #ifdef ARC_Y_IS_DOWN
@@ -110,7 +113,7 @@ void tk_make_handle()
 #endif
     });
     glfwSetKeyCallback(window, [](GLFWwindow *, int button, int scancode, int action, int mods) {
-        for (auto& e : event_key_state)
+        for (auto &e : event_key_state)
             e(button, scancode, action, mods);
         keydown[button] = clock::now().ticks;
         keydown_render[button] = clock::now().render_ticks;
@@ -120,25 +123,25 @@ void tk_make_handle()
     glfwSetCharCallback(window, [](GLFWwindow *, unsigned int cp) {
         if (cp <= 0x7F)
         {
-            __char_seq.push_back(static_cast<char>(cp));
+            P_char_seq.push_back(static_cast<char>(cp));
         }
         else if (cp <= 0x7FF)
         {
-            __char_seq.push_back(static_cast<char>(0xC0 | (cp >> 6)));
-            __char_seq.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+            P_char_seq.push_back(static_cast<char>(0xC0 | (cp >> 6)));
+            P_char_seq.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
         }
         else if (cp <= 0xFFFF)
         {
-            __char_seq.push_back(static_cast<char>(0xE0 | (cp >> 12)));
-            __char_seq.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
-            __char_seq.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+            P_char_seq.push_back(static_cast<char>(0xE0 | (cp >> 12)));
+            P_char_seq.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
+            P_char_seq.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
         }
         else if (cp <= 0x10FFFF)
         {
-            __char_seq.push_back(static_cast<char>(0xF0 | (cp >> 18)));
-            __char_seq.push_back(static_cast<char>(0x80 | ((cp >> 12) & 0x3F)));
-            __char_seq.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
-            __char_seq.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
+            P_char_seq.push_back(static_cast<char>(0xF0 | (cp >> 18)));
+            P_char_seq.push_back(static_cast<char>(0x80 | ((cp >> 12) & 0x3F)));
+            P_char_seq.push_back(static_cast<char>(0x80 | ((cp >> 6) & 0x3F)));
+            P_char_seq.push_back(static_cast<char>(0x80 | (cp & 0x3F)));
         }
     });
 
@@ -238,14 +241,14 @@ void tk_lifecycle(int fps, int tps, bool vsync)
 {
     // init global gfx usage
     direct_mesh = make_mesh();
-    direct_mesh->__is_direct = true;
+    direct_mesh->P_is_direct = true;
     // end region
     glfwSwapInterval(vsync ? 1 : 0);
 
     const double DT_LOGIC_NS = 1'000'000'000.0 / tps;
     const double DT_RENDER_NS = (fps > 0) ? 1'000'000'000.0 / fps : 0.0;
 
-    double current = __nanos();
+    double current = P_nanos();
     double logic_debt = 0.0;
     double last_render = current;
 
@@ -261,30 +264,33 @@ void tk_lifecycle(int fps, int tps, bool vsync)
     {
         while (!tk_poll_events())
         {
-            current = __nanos();
+            current = P_nanos();
 
             logic_debt += (current - last_calc);
             last_calc = current;
 
             int max_catch = 4;
+            P_just_ticked = false;
+
             while (logic_debt >= DT_LOGIC_NS && max_catch--)
             {
-                __cur_in_tick = true;
-                for (auto& e : event_tick)
+                P_cur_in_tick = true;
+                for (auto &e : event_tick)
                     e();
-                __cur_in_tick = false;
+                P_cur_in_tick = false;
                 clock::now().ticks++;
                 clock::now().seconds += clock::now().delta;
                 tick_frm++;
                 logic_debt -= DT_LOGIC_NS;
+                P_just_ticked = true;
             }
 
             if (fps <= 0 || current - last_render >= DT_RENDER_NS)
             {
                 clock::now().partial = std::clamp(1.0 - (logic_debt / DT_LOGIC_NS), 0.0, 1.0);
 
-                auto brush = direct_mesh->brush_binded.get();
-                for (auto& e : event_render)
+                auto brush = direct_mesh->P_brush.get();
+                for (auto &e : event_render)
                     e(brush);
                 clock::now().render_ticks++;
                 brush->flush();
@@ -307,12 +313,12 @@ void tk_lifecycle(int fps, int tps, bool vsync)
     }
     catch (std::exception &e)
     {
-        prtlog(ARC_FATAL, "fatal error occurred: {}", e.what());
+        arclog(ARC_FATAL, "fatal error occurred: {}", e.what());
         // re-throw for debugging & stack trace.
         throw e;
     }
 
-    for (auto& e : event_dispose)
+    for (auto &e : event_dispose)
         e();
 }
 
@@ -366,31 +372,36 @@ void tk_hook_key_state(std::function<void(int button, int scancode, int action, 
     event_key_state.push_back(callback);
 }
 
-bool tk_key_held(int key, int mod)
+bool P_tk_key_held(int key, int mod)
 {
     return keyact[key] != GLFW_RELEASE && (mod == ARC_MOD_ANY || keymod[key] & mod);
 }
 
-bool tk_key_press(int key, int mod)
+bool P_tk_key_press(int key, int mod)
 {
-    bool pressc = (__cur_in_tick && keydown[key] == clock::now().ticks) ||
-                  (!__cur_in_tick && keydown_render[key] == clock::now().render_ticks);
+    bool pressc = (P_cur_in_tick && keydown[key] == clock::now().ticks) ||
+                  (!P_cur_in_tick && keydown_render[key] == clock::now().render_ticks);
     return keyact[key] == GLFW_PRESS && pressc && (mod == ARC_MOD_ANY || keymod[key] & mod);
 }
 
-vec2 tk_get_cursor()
+bool P_tk_key_repeat(int key, int mod)
+{
+    return keyact[key] == GLFW_REPEAT && (mod == ARC_MOD_ANY || keymod[key] & mod) && P_just_ticked;
+}
+
+vec2 P_tk_get_cursor()
 {
     return vec2(mcx, mcy);
 }
 
-double tk_consume_scroll()
+double P_tk_consume_scroll()
 {
     double d = std::abs(mscy);
     mscy = 0;
     return d;
 }
 
-int tk_get_scroll_towards()
+int P_tk_get_scroll_towards()
 {
     if (mscy > 10E-4)
         return ARC_SCROLL_UP;
@@ -399,19 +410,19 @@ int tk_get_scroll_towards()
     return ARC_SCROLL_NO;
 }
 
-std::string tk_consume_chars()
+std::string P_tk_consume_chars()
 {
-    std::string cpy = __char_seq;
-    __char_seq.clear();
+    std::string cpy = P_char_seq;
+    P_char_seq.clear();
     return cpy;
 }
 
-std::string tk_consume_clipboard_text()
+std::string P_tk_consume_clipboard_text()
 {
     return glfwGetClipboardString(window);
 }
 
-void tk_set_clipboard_text(const std::string &str)
+void P_tk_set_clipboard_text(const std::string &str)
 {
     glfwSetClipboardString(window, str.c_str());
 }

@@ -1,6 +1,9 @@
 #include <gfx/mesh.h>
+
+// clang-format off
 #include <gl/glew.h>
 #include <gl/gl.h>
+// clang-format on
 
 namespace arcaie::gfx
 {
@@ -8,48 +11,48 @@ namespace arcaie::gfx
 mesh::mesh()
 {
     buffer = make_buffer();
-    brush_binded = make_brush(buffer);
-    brush_binded->__mesh_root = this;
+    P_brush = make_brush(buffer);
+    P_brush->P_mesh_root = this;
 }
 
 mesh::~mesh()
 {
-    glDeleteVertexArrays(1, &__vao);
-    glDeleteBuffers(1, &__vbo);
-    glDeleteBuffers(1, &__ebo);
+    glDeleteVertexArrays(1, &P_vao);
+    glDeleteBuffers(1, &P_vbo);
+    glDeleteBuffers(1, &P_ebo);
 }
 
 brush *mesh::retry()
 {
     buffer->clear();
-    if (!__is_direct)
-        brush_binded->__is_in_mesh = true;
-    return brush_binded.get();
+    if (!P_is_direct)
+        P_brush->P_is_in_mesh = true;
+    return P_brush.get();
 }
 
 void mesh::record()
 {
-    m_state = brush_binded->m_state;
-    if (!__is_direct)
-        brush_binded->__is_in_mesh = false;
+    state = P_brush->P_state;
+    if (!P_is_direct)
+        P_brush->P_is_in_mesh = false;
 }
 
 void mesh::draw(brush *gbrush)
 {
-    auto old_state = gbrush->m_state;
-    auto old_buf = gbrush->buffer;
-    auto old_msh = gbrush->__mesh_root;
+    auto old_state = gbrush->P_state;
+    auto old_buf = gbrush->wbuf;
+    auto old_msh = gbrush->P_mesh_root;
 
-    gbrush->use(m_state);
-    gbrush->buffer = buffer;
-    gbrush->__mesh_root = this;
-    gbrush->__clear_when_flush = false;
+    gbrush->use(state);
+    gbrush->wbuf = buffer;
+    gbrush->P_mesh_root = this;
+    gbrush->P_clear_when_flush = false;
 
     gbrush->flush();
 
-    gbrush->__clear_when_flush = true;
-    gbrush->__mesh_root = old_msh;
-    gbrush->buffer = old_buf;
+    gbrush->P_clear_when_flush = true;
+    gbrush->P_mesh_root = old_msh;
+    gbrush->wbuf = old_buf;
     gbrush->use(old_state);
 }
 
@@ -62,9 +65,9 @@ shared<mesh> make_mesh()
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
     glGenBuffers(1, &ebo);
-    msh->__vao = vao;
-    msh->__vbo = vbo;
-    msh->__ebo = ebo;
+    msh->P_vao = vao;
+    msh->P_vbo = vbo;
+    msh->P_ebo = ebo;
 
     return msh;
 }

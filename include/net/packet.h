@@ -1,6 +1,6 @@
 #pragma once
 #include <core/buffer.h>
-#include <core/hio.h>
+#include <core/io.h>
 #include <core/uuid.h>
 #include <functional>
 #include <map>
@@ -46,16 +46,16 @@ template <typename T, typename... Args> shared<packet> make_packet(Args &&...arg
     return std::make_unique<T>(std::forward<Args>(args)...);
 }
 
-int __pid_counter();
-std::map<int, std::function<shared<packet>()>> &__pmap();
-std::map<size_t, int> &__pmap_rev();
+int P_pid_counter();
+std::map<int, std::function<shared<packet>()>> &P_get_packet_map_i2f();
+std::map<size_t, int> &P_get_packet_map_h2i();
 
 template <typename T> void register_packet()
 {
     const auto &tid = typeid(T);
-    int pid = __pid_counter();
-    __pmap()[pid] = []() { return make_packet<T>(); };
-    __pmap_rev()[tid.hash_code()] = pid;
+    int pid = P_pid_counter();
+    P_get_packet_map_i2f()[pid] = []() { return make_packet<T>(); };
+    P_get_packet_map_h2i()[tid.hash_code()] = pid;
 }
 
 #ifdef ARC_USE_BUILTIN_PACKETS
@@ -98,7 +98,7 @@ struct packet_dummy : packet
 
     void perform(packet_context *) override
     {
-        prtlog(ARC_DEBUG, str);
+        arclog(ARC_DEBUG, str);
     }
 };
 #endif

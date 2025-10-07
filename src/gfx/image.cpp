@@ -1,11 +1,14 @@
 #include <gfx/image.h>
 #include <core/log.h>
-#include <gl/glew.h>
-#include <gl/gl.h>
 #include <gfx/brush.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+
+// clang-format off
+#include <gl/glew.h>
+#include <gl/gl.h>
+// clang-format on
 
 namespace arcaie::gfx
 {
@@ -18,20 +21,20 @@ image::image(byte *data, int w, int h) : width(w), height(h), pixels(data)
 
 image::~image()
 {
-    if (__is_from_stb)
+    if (P_is_from_stb)
         stbi_image_free(pixels);
     else
         delete[] pixels;
     pixels = nullptr;
 }
 
-shared<image> load_image(const hio_path &path)
+shared<image> load_image(const path_handle &path)
 {
     shared<image> img = std::make_shared<image>();
     img->pixels = stbi_load(path.absolute.c_str(), &img->width, &img->height, nullptr, 4);
     if (img->pixels == nullptr)
-        prtlog_throw(ARC_FATAL, "path not found: {}", path.absolute);
-    img->__is_from_stb = true;
+        arcthrow(ARC_FATAL, "path not found: {}", path.absolute);
+    img->P_is_from_stb = true;
     return img;
 }
 
@@ -41,14 +44,14 @@ shared<image> make_image(int width, int height, byte *data)
     img->width = width;
     img->height = height;
     img->pixels = data;
-    img->__is_from_stb = false;
+    img->P_is_from_stb = false;
     return img;
 }
 
 texture::~texture()
 {
     if (root == nullptr)
-        glDeleteTextures(1, &__texture_id);
+        glDeleteTextures(1, &P_texture_id);
 }
 
 shared<texture> make_texture(shared<image> img)
@@ -56,7 +59,7 @@ shared<texture> make_texture(shared<image> img)
     shared<texture> tex = std::make_shared<texture>();
     unsigned int id;
     glGenTextures(1, &id);
-    tex->__texture_id = id;
+    tex->P_texture_id = id;
 
     if (img != nullptr)
         lazylink_texture_data(tex, img);
@@ -67,7 +70,7 @@ shared<texture> make_texture(shared<image> img)
 void set_texture_parameters(shared<texture> tex, texture_parameters param)
 {
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex->__texture_id);
+    glBindTexture(GL_TEXTURE_2D, tex->P_texture_id);
 
     GLenum mode0;
     switch (param.uv)
@@ -95,12 +98,12 @@ void set_texture_parameters(shared<texture> tex, texture_parameters param)
 
 void lazylink_texture_data(shared<texture> tex, shared<image> img)
 {
-    tex->__relying_image = img;
+    tex->P_relying_image = img;
     tex->fwidth = tex->width = img->width;
     tex->fheight = tex->height = img->height;
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex->__texture_id);
+    glBindTexture(GL_TEXTURE_2D, tex->P_texture_id);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->width, img->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
 
     set_texture_parameters(tex, {});
@@ -118,18 +121,18 @@ shared<texture> cut_texture(shared<texture> tex, const quad &src)
     ntex->u = src.x;
     ntex->v = src.y;
     ntex->root = tex;
-    ntex->__relying_image = tex->__relying_image;
-    ntex->__texture_id = tex->__texture_id;
-    ntex->__is_framebuffer = tex->__is_framebuffer;
+    ntex->P_relying_image = tex->P_relying_image;
+    ntex->P_texture_id = tex->P_texture_id;
+    ntex->P_is_framebuffer = tex->P_is_framebuffer;
     return ntex;
 }
 
 void bind_texture(int unit, shared<texture> tex)
 {
     if (unit == 0)
-        prtlog_throw(ARC_FATAL, "cannot bind to texture unit 0, since it is reserved.");
+        arcthrow(ARC_FATAL, "cannot bind to texture unit 0, since it is reserved.");
     glActiveTexture(GL_TEXTURE0 + unit);
-    glBindTexture(GL_TEXTURE_2D, tex->__texture_id);
+    glBindTexture(GL_TEXTURE_2D, tex->P_texture_id);
 }
 
 nine_patches::nine_patches() = default;
@@ -173,8 +176,8 @@ void nine_patches::make_vtx(brush *brush, const quad &dst) const
     if (rh == 0)
         rh = th;
     double x = dst.x, y = dst.y;
-    double x2 = x + (__enable_overlapping ? dst.width - tw : tw * (nw - 1));
-    double y2 = y + (__enable_overlapping ? dst.height - th : th * (nh - 1));
+    double x2 = x + (P_enable_overlapping ? dst.width - tw : tw * (nw - 1));
+    double y2 = y + (P_enable_overlapping ? dst.height - th : th * (nh - 1));
 
     for (int i = 1; i < nw - 1; i++)
         for (int j = 1; j < nh - 1; j++)

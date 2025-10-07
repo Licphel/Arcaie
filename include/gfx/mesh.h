@@ -11,12 +11,12 @@ namespace arcaie::gfx
 
 struct mesh
 {
-    graph_state m_state;
+    graph_state state;
     shared<complex_buffer> buffer;
-    shared<brush> brush_binded;
+    shared<brush> P_brush;
 
-    /* unstable */ unsigned int __vao, __vbo, __ebo;
-    /* unstable */ bool __is_direct;
+    /* unstable */ unsigned int P_vao, P_vbo, P_ebo;
+    /* unstable */ bool P_is_direct;
 
     mesh();
     ~mesh();
@@ -30,4 +30,4 @@ struct mesh
 
 shared<mesh> make_mesh();
 
-} // namespace arcaie
+} // namespace arcaie::gfx

@@ -1,4 +1,4 @@
-#include <audi/device.h>
+#include <audio/device.h>
 #include <al/alc.h>
 #include <al/al.h>
 #include <gfx/device.h>
@@ -8,23 +8,23 @@
 
 using namespace arcaie::gfx;
 
-namespace arcaie::audi
+namespace arcaie::audio
 {
 
 track::~track()
 {
-    alDeleteBuffers(1, &__track_id);
+    alDeleteBuffers(1, &P_track_id);
 }
 
 clip::~clip()
 {
-    alDeleteSources(1, &__clip_id);
+    alDeleteSources(1, &P_clip_id);
 }
 
 clip_status clip::status()
 {
     int sts;
-    alGetSourcei(__clip_id, AL_SOURCE_STATE, &sts);
+    alGetSourcei(P_clip_id, AL_SOURCE_STATE, &sts);
     if (sts == AL_STOPPED)
         return clip_status::END;
     if (sts == AL_PLAYING)
@@ -37,47 +37,46 @@ clip_status clip::status()
 void clip::set(clip_op param, double v)
 {
     if (param == clip_op::GAIN)
-        alSourcef(__clip_id, AL_GAIN, v);
+        alSourcef(P_clip_id, AL_GAIN, v);
     else if (param == clip_op::PITCH)
-        alSourcef(__clip_id, AL_PITCH, v);
+        alSourcef(P_clip_id, AL_PITCH, v);
 }
 
 void clip::set(clip_op param, const vec2 &v)
 {
     if (param == clip_op::LOCATION)
-        alSource3f(__clip_id, AL_POSITION, v.x, v.y, 0);
+        alSource3f(P_clip_id, AL_POSITION, v.x, v.y, 0);
 }
 
 void clip::set(clip_op param, const vec3 &v)
 {
     if (param == clip_op::LOCATION)
-        alSource3f(__clip_id, AL_POSITION, v.x, v.y, 0);
+        alSource3f(P_clip_id, AL_POSITION, v.x, v.y, 0);
 }
 
 void clip::operate(clip_op param)
 {
     if (param == clip_op::PLAY)
-        alSourcePlay(__clip_id);
+        alSourcePlay(P_clip_id);
     else if (param == clip_op::LOOP)
     {
-        alSourcei(__clip_id, AL_LOOPING, AL_TRUE);
-        alSourcePlay(__clip_id);
+        alSourcei(P_clip_id, AL_LOOPING, AL_TRUE);
+        alSourcePlay(P_clip_id);
     }
     else if (param == clip_op::PAUSE)
-        alSourcePause(__clip_id);
+        alSourcePause(P_clip_id);
     else if (param == clip_op::STOP)
-        alSourceStop(__clip_id);
+        alSourceStop(P_clip_id);
 }
 
-// global al usage
-ALCdevice *al_dev;
-ALCcontext *al_ctx;
-std::vector<shared<clip>> clip_r;
-double rolloff = 1.0;
-double max_dist = 1.0;
-double ref_dist = 1.0;
+static ALCdevice *al_dev;
+static ALCcontext *al_ctx;
+static std::vector<shared<clip>> clip_r;
+static double rolloff = 1.0;
+static double max_dist = 1.0;
+static double ref_dist = 1.0;
 
-void __process_tracks()
+void P_process_tracks()
 {
     auto it = clip_r.begin();
     while (it != clip_r.end())
@@ -96,7 +95,7 @@ void tk_make_device()
     al_dev = alcOpenDevice(nullptr);
     al_ctx = alcCreateContext(al_dev, nullptr);
     alcMakeContextCurrent(al_ctx);
-    tk_hook_event_tick([]() { __process_tracks(); });
+    tk_hook_event_tick([]() { P_process_tracks(); });
     tk_hook_event_dispose([]() {
         alcDestroyContext(al_ctx);
         alcCloseDevice(al_dev);
@@ -109,22 +108,22 @@ void tk_end_make_device()
     // nothing
 }
 
-shared<track> load_track(const hio_path &path)
+shared<track> load_track(const path_handle &path)
 {
-    auto file = hio_read_bytes(path);
+    auto file = io_read_bytes(path);
 
     size_t index = 0;
 
     if (file.size() < 12)
-        prtlog_throw(ARC_FATAL, "too small file: {}", path.absolute);
+        arcthrow(ARC_FATAL, "too small file: {}", path.absolute);
 
     if (file[index++] != 'R' || file[index++] != 'I' || file[index++] != 'F' || file[index++] != 'F')
-        prtlog_throw(ARC_FATAL, "not a wave file: {}", path.absolute);
+        arcthrow(ARC_FATAL, "not a wave file: {}", path.absolute);
 
     index += 4;
 
     if (file[index++] != 'W' || file[index++] != 'A' || file[index++] != 'V' || file[index++] != 'E')
-        prtlog_throw(ARC_FATAL, "not a wave file: {}", path.absolute);
+        arcthrow(ARC_FATAL, "not a wave file: {}", path.absolute);
 
     int samp_rate = 0;
     int16_t bps = 0;
@@ -147,17 +146,17 @@ shared<track> load_track(const hio_path &path)
         index += 4;
 
         if (index + chunk_size > file.size())
-            prtlog_throw(ARC_FATAL, "invalid chunk size: {}", path.absolute);
+            arcthrow(ARC_FATAL, "invalid chunk size: {}", path.absolute);
 
         if (identifier == "fmt ")
         {
             if (chunk_size != 16)
-                prtlog_throw(ARC_FATAL, "unknown format: {}", path.absolute);
+                arcthrow(ARC_FATAL, "unknown format: {}", path.absolute);
 
             int16_t audio_format = *reinterpret_cast<const int16_t *>(&file[index]);
             index += 2;
             if (audio_format != 1)
-                prtlog_throw(ARC_FATAL, "unknown format: {}", path.absolute);
+                arcthrow(ARC_FATAL, "unknown format: {}", path.absolute);
 
             n_ch = *reinterpret_cast<const int16_t *>(&file[index]);
             index += 2;
@@ -175,7 +174,7 @@ shared<track> load_track(const hio_path &path)
                 else if (bps == 16)
                     format = AL_FORMAT_MONO16;
                 else
-                    prtlog_throw(ARC_FATAL, "can't play mono " + std::to_string(bps) + " sound.");
+                    arcthrow(ARC_FATAL, "can't play mono " + std::to_string(bps) + " sound.");
             }
             else if (n_ch == 2)
             {
@@ -184,10 +183,10 @@ shared<track> load_track(const hio_path &path)
                 else if (bps == 16)
                     format = AL_FORMAT_STEREO16;
                 else
-                    prtlog_throw(ARC_FATAL, "can't play stereo " + std::to_string(bps) + " sound.");
+                    arcthrow(ARC_FATAL, "can't play stereo " + std::to_string(bps) + " sound.");
             }
             else
-                prtlog_throw(ARC_FATAL, "can't play audio with " + std::to_string(n_ch) + " channels");
+                arcthrow(ARC_FATAL, "can't play audio with " + std::to_string(n_ch) + " channels");
         }
         else if (identifier == "data")
         {
@@ -203,7 +202,7 @@ shared<track> load_track(const hio_path &path)
     }
 
     auto ptr = std::make_shared<track>();
-    ptr->__track_id = buffer;
+    ptr->P_track_id = buffer;
     ptr->sec_len = (double)byte_size / (samp_rate * bps / 8.0) / n_ch;
 
     return ptr;
@@ -213,14 +212,14 @@ shared<clip> make_clip(shared<track> track)
 {
     unsigned int id;
     alGenSources(1, &id);
-    alSourcei(id, AL_BUFFER, track->__track_id);
+    alSourcei(id, AL_BUFFER, track->P_track_id);
     alSourcef(id, AL_ROLLOFF_FACTOR, rolloff);
     alSourcef(id, AL_REFERENCE_DISTANCE, ref_dist);
     alSourcef(id, AL_MAX_DISTANCE, max_dist);
 
     auto ptr = std::make_shared<clip>();
     ptr->relying_track = track;
-    ptr->__clip_id = id;
+    ptr->P_clip_id = id;
     clip_r.push_back(ptr);
     return ptr;
 }
@@ -247,4 +246,4 @@ void tk_set_device_option(device_option opt, const vec3 &v)
         alListener3f(AL_POSITION, v.x, v.y, v.z);
 }
 
-} // namespace arcaie::audi
+} // namespace arcaie::audio

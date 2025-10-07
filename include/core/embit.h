@@ -7,85 +7,88 @@ template <typename E> struct bitmask
 {
     static_assert(std::is_enum_v<E>, "E must be enum or enum class");
     using underlying = std::underlying_type_t<E>;
-    underlying __bits = {0};
+    underlying P_bits = {0};
 
     constexpr bitmask() = default;
-    constexpr bitmask(E e) : __bits(static_cast<underlying>(e))
+    constexpr bitmask(E e) : P_bits(static_cast<underlying>(e))
+    {
+    }
+    constexpr bitmask(underlying raw) : P_bits(raw)
     {
     }
 
     constexpr bitmask operator|(bitmask rhs) const
     {
-        return bitmask(__bits | rhs.__bits);
+        return bitmask(P_bits | rhs.P_bits);
     }
 
     constexpr bitmask operator&(bitmask rhs) const
     {
-        return bitmask(__bits & rhs.__bits);
+        return bitmask(P_bits & rhs.P_bits);
     }
 
     constexpr bitmask operator^(bitmask rhs) const
     {
-        return bitmask(__bits ^ rhs.__bits);
+        return bitmask(P_bits ^ rhs.P_bits);
     }
 
     constexpr bitmask operator~() const
     {
-        return bitmask(~__bits);
+        return bitmask(~P_bits);
     }
 
     constexpr bitmask &operator|=(bitmask rhs)
     {
-        __bits |= rhs.__bits;
+        P_bits |= rhs.P_bits;
         return *this;
     }
 
     constexpr bitmask &operator&=(bitmask rhs)
     {
-        __bits &= rhs.__bits;
+        P_bits &= rhs.P_bits;
         return *this;
     }
 
     constexpr bitmask &operator^=(bitmask rhs)
     {
-        __bits ^= rhs.__bits;
+        P_bits ^= rhs.P_bits;
         return *this;
     }
 
     constexpr bool test(E e) const
     {
-        return __bits & static_cast<underlying>(e);
+        return P_bits & static_cast<underlying>(e);
     }
 
     constexpr void set(E e)
     {
-        __bits |= static_cast<underlying>(e);
+        P_bits |= static_cast<underlying>(e);
     }
 
     constexpr void clear(E e)
     {
-        __bits &= ~static_cast<underlying>(e);
+        P_bits &= ~static_cast<underlying>(e);
     }
 
     constexpr void toggle(E e)
     {
-        __bits ^= static_cast<underlying>(e);
+        P_bits ^= static_cast<underlying>(e);
     }
 
     constexpr underlying value() const
     {
-        return __bits;
+        return P_bits;
     }
 
     constexpr explicit operator bool() const
     {
-        return __bits != 0;
+        return P_bits != 0;
     }
 };
 
 template <typename E, typename... Es> constexpr bitmask<E> mask(E e, Es... rest)
 {
-    return (mask<E>(e) | ... | mask<E>(rest));
+    return (bitmask<E>(e) | ... | bitmask<E>(rest));
 }
 
 } // namespace arcaie

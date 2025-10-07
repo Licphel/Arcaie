@@ -1,10 +1,10 @@
 #pragma once
-#include <gfx/image.h>
-#include <iostream>
-#include <core/hio.h>
+#include <core/io.h>
+#include <core/key.h>
 #include <core/math.h>
 #include <functional>
-#include <core/key.h>
+#include <gfx/image.h>
+#include <iostream>
 
 namespace arcaie::gfx
 {
@@ -43,16 +43,17 @@ void tk_hook_mouse_state(std::function<void(int button, int action, int mods)> c
 void tk_hook_cursor_pos(std::function<void(double x, double y)> callback);
 void tk_hook_key_state(std::function<void(int button, int scancode, int action, int mods)> callback);
 
-bool tk_key_held(int key, int mod = ARC_MOD_ANY);
-bool tk_key_press(int key, int mod = ARC_MOD_ANY);
-vec2 tk_get_cursor();
+bool P_tk_key_held(int key, int mod = ARC_MOD_ANY);
+bool P_tk_key_press(int key, int mod = ARC_MOD_ANY);
+bool P_tk_key_repeat(int key, int mod = ARC_MOD_ANY);
+vec2 P_tk_get_cursor();
 // consumes an abs value of scroll.
-double tk_consume_scroll();
+double P_tk_consume_scroll();
 // returns ARC_SCROLL_UP, ARC_SCROLL_DOWN or ARC_SCROLL_NO
-int tk_get_scroll_towards();
+int P_tk_get_scroll_towards();
 // consume the typed characters since last call.
-std::string tk_consume_chars();
-std::string tk_consume_clipboard_text();
-void tk_set_clipboard_text(const std::string &str);
+std::string P_tk_consume_chars();
+std::string P_tk_consume_clipboard_text();
+void P_tk_set_clipboard_text(const std::string &str);
 
 } // namespace arcaie::gfx

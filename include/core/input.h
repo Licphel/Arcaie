@@ -10,6 +10,8 @@ namespace arcaie
 
 bool key_held(int key, int mod = ARC_MOD_ANY);
 bool key_press(int key, int mod = ARC_MOD_ANY);
+// check if a key is pressed or repeated.
+bool key_repeat(int key, int mod = ARC_MOD_ANY);
 vec2 get_cursor();
 // consumes an abs value of scroll.
 double consume_scroll();

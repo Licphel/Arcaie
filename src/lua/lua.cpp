@@ -18,13 +18,13 @@ lua_state &lua_get_gstate()
 
 int __c_lua_load(lua_State *L)
 {
-    res_id module_id = res_id(luaL_checkstring(L, 1));
-    hio_path path = module_id.find_path();
+    unique_id module_id = unique_id(luaL_checkstring(L, 1));
+    path_handle path = module_id.find_path();
 
-    if (!hio_exists(path) || hio_judge(path) != hpath_type::FILE)
+    if (!io_exists(path) || io_judge(path) != path_type::FILE)
         return 0;
 
-    std::string code = hio_read_str(path);
+    std::string code = io_read_str(path);
 
     if (luaL_loadbuffer(L, code.data(), code.size(), path.absolute.c_str()) != LUA_OK)
         return lua_error(L);

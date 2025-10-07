@@ -1,9 +1,9 @@
 #pragma once
 #include <core/def.h>
 #include <core/math.h>
-#include <core/hio.h>
+#include <core/io.h>
 
-namespace arcaie::audi
+namespace arcaie::audio
 {
 
 enum class device_option
@@ -16,7 +16,7 @@ enum class device_option
 
 struct track
 {
-    /* unstable */ unsigned int __track_id;
+    /* unstable */ unsigned int P_track_id;
     double sec_len;
 
     ~track();
@@ -45,7 +45,7 @@ enum class clip_status
 struct clip
 {
     shared<track> relying_track;
-    /* unstable */ unsigned int __clip_id;
+    /* unstable */ unsigned int P_clip_id;
 
     ~clip();
     clip_status status();
@@ -59,7 +59,7 @@ struct clip
 
 void tk_make_device();
 void tk_end_make_device();
-shared<track> load_track(const hio_path &path);
+shared<track> load_track(const path_handle &path);
 shared<clip> make_clip(shared<track> track);
 
 // these options should be set between #tk_make_device and #tk_end_make_device.
@@ -67,4 +67,4 @@ void tk_set_device_option(device_option opt, double v);
 void tk_set_device_option(device_option opt, const vec2 &v);
 void tk_set_device_option(device_option opt, const vec3 &v);
 
-} // namespace arcaie::audi
+} // namespace arcaie::audio

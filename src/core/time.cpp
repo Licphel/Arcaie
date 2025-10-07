@@ -15,24 +15,24 @@ watch::watch(double interval, double perc) : interval(interval), accp(perc)
 watch::operator bool()
 {
     double cs = clock::now().seconds;
-    if (cs >= __timestamp + interval)
+    if (cs >= P_timestamp + interval)
     {
-        __timestamp = cs;
+        P_timestamp = cs;
         return true;
     }
-    return cs - __timestamp >= (1.0 - accp) * interval;
+    return cs - P_timestamp >= (1.0 - accp) * interval;
 }
 
-static clock __clock;
+static clock P_clock;
 
 clock &clock::now()
 {
-    return __clock;
+    return P_clock;
 }
 
 double lerp(double old, double now)
 {
-    return old + __clock.partial * (now - old);
+    return old + P_clock.partial * (now - old);
 }
 
 } // namespace arcaie

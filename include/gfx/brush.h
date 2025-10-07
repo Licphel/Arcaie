@@ -41,16 +41,16 @@ struct mesh;
 struct brush
 {
     color vertex_color[4]{};
-    std::stack<transform> transform_stack;
-    camera camera_binded;
-    graph_state m_state;
-    shared<shader_program> __default_colored;
-    shared<shader_program> __default_textured;
-    weak<complex_buffer> buffer;
-    mesh *__mesh_root;
-    bool __is_in_mesh = false;
+    std::stack<transform> P_tstack;
+    camera P_camera;
+    graph_state P_state;
+    shared<shader_program> P_default_colored;
+    shared<shader_program> P_default_textured;
+    weak<complex_buffer> wbuf;
+    mesh *P_mesh_root;
+    bool P_is_in_mesh = false;
     // when true, the brush will clear the buffer when flushed.
-    bool __clear_when_flush = true;
+    bool P_clear_when_flush = true;
 
     brush();
 

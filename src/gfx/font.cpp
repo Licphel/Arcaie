@@ -1,14 +1,15 @@
-#include <gfx/font.h>
-#include <gfx/atlas.h>
+#include <core/chcvt.h>
 #include <core/log.h>
-#include <string>
 #include <freetype2/ft2build.h>
+#include <gfx/atlas.h>
+#include <gfx/font.h>
+#include <string>
 #include FT_FREETYPE_H
 
 namespace arcaie::gfx
 {
 
-struct font::_impl
+struct font::P_impl
 {
     FT_FaceRec_ *face_ptr;
     FT_LibraryRec_ *lib_ptr;
@@ -16,29 +17,27 @@ struct font::_impl
     double res, pix;
 };
 
-// for unique_ptr<_impl> to refer
-font::font() : __p(std::make_unique<_impl>())
+font::font() : P_pimpl(std::make_unique<P_impl>())
 {
 }
 
-// for unique_ptr<_impl> to refer
 font::~font()
 {
-    FT_Done_Face(__p->face_ptr);
-    FT_Done_FreeType(__p->lib_ptr);
+    FT_Done_Face(P_pimpl->face_ptr);
+    FT_Done_FreeType(P_pimpl->lib_ptr);
 }
 
-shared<texture> __flush_codemap(font::_impl *__p, u32_char ch, shared<image> img)
+shared<texture> P_flush_codemap(font::P_impl *P_p, u32_char ch, shared<image> img)
 {
     int code = (int)floor(static_cast<int>(ch) / 256.0);
-    if (__p->codemap.find(code) == __p->codemap.end())
+    if (P_p->codemap.find(code) == P_p->codemap.end())
     {
-        int ats = __p->res * 16;
-        __p->codemap[code] = std::make_shared<atlas>(ats, ats);
-        __p->codemap[code]->begin();
+        int ats = P_p->res * 16;
+        P_p->codemap[code] = std::make_shared<atlas>(ats, ats);
+        P_p->codemap[code]->begin();
     }
 
-    auto atl = __p->codemap[code];
+    auto atl = P_p->codemap[code];
     auto tptr = atl->accept(img);
     atl->end();
     return tptr;
@@ -46,10 +45,10 @@ shared<texture> __flush_codemap(font::_impl *__p, u32_char ch, shared<image> img
 
 glyph font::make_glyph(u32_char ch)
 {
-    auto face = __p->face_ptr;
+    auto face = P_pimpl->face_ptr;
     unsigned int idx = FT_Get_Char_Index(face, ch);
 
-    FT_Set_Pixel_Sizes(face, 0, __p->res);
+    FT_Set_Pixel_Sizes(face, 0, P_pimpl->res);
     FT_Load_Glyph(face, idx, FT_LOAD_DEFAULT);
     FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
     FT_Bitmap_ m0 = face->glyph->bitmap;
@@ -67,10 +66,10 @@ glyph font::make_glyph(u32_char ch)
 
     shared<image> img = make_image((int)face->glyph->bitmap.width, (int)face->glyph->bitmap.rows, buf);
 
-    double ds = __p->res / __p->pix;
+    double ds = P_pimpl->res / P_pimpl->pix;
 
     glyph g;
-    g.texpart = __flush_codemap(__p.get(), ch, img);
+    g.texpart = P_flush_codemap(P_pimpl.get(), ch, img);
     set_texture_parameters(g.texpart, texture_parameters(texture_parameter::UV_CLAMP, texture_parameter::FILTER_LINEAR,
                                                          texture_parameter::FILTER_LINEAR));
     g.size.x = ch == ' ' ? face->glyph->metrics.horiAdvance / ds / 64.0 : face->glyph->metrics.width / ds / 64.0;
@@ -78,7 +77,7 @@ glyph font::make_glyph(u32_char ch)
     g.advance = face->glyph->advance.x / ds / 64.0;
     g.offset.x = face->glyph->metrics.horiBearingX / ds / 64.0;
 #ifdef ARC_Y_IS_DOWN
-    g.offset.y = -face->glyph->metrics.horiBearingY / ds / 64.0 + f_height + face->bbox.yMin / ds / 64.0;
+    g.offset.y = -face->glyph->metrics.horiBearingY / ds / 64.0 + height + face->bbox.yMin / ds / 64.0;
 #else
     g.offset.y = face->glyph->metrics.horiBearingY / ds / 64.0 - g.size.y;
 #endif
@@ -86,121 +85,98 @@ glyph font::make_glyph(u32_char ch)
     return g;
 }
 
-static std::u32string to_u32(std::string_view u8)
+font_render_bound font::make_vtx(brush *brush, const std::string &u8_str, double x, double y, bitmask<font_align> align,
+                                 double max_w, double scale)
 {
-    std::u32string out;
-    out.reserve(u8.size());
-    auto it = u8.begin(), last = u8.end();
-
-    auto need = [&](std::ptrdiff_t n) { return std::distance(it, last) >= n; };
-    auto cont = [&](unsigned char c) { return (c & 0xC0) == 0x80; };
-
-    while (it != last)
-    {
-        unsigned char lead = *it++;
-        u32_char cp;
-        if (lead < 0x80)
-            cp = lead;
-        else if ((lead & 0xE0) == 0xC0)
-        {
-            if (!need(1) || !cont(*it))
-                return {};
-            cp = u32_char(lead & 0x1F) << 6 | (*it++ & 0x3F);
-            if (cp < 0x80)
-                return {};
-        }
-        else if ((lead & 0xF0) == 0xE0)
-        {
-            if (!need(2) || !cont(it[0]) || !cont(it[1]))
-                return {};
-            cp = u32_char(lead & 0x0F) << 12 | u32_char(*it++ & 0x3F) << 6 | u32_char(*it++ & 0x3F);
-            if (cp < 0x800 || (cp >= 0xD800 && cp <= 0xDFFF))
-                return {};
-        }
-        else if ((lead & 0xF8) == 0xF0)
-        {
-            if (!need(3) || !cont(it[0]) || !cont(it[1]) || !cont(it[2]))
-                return {};
-            cp = u32_char(lead & 0x07) << 18 | u32_char(*it++ & 0x3F) << 12 | u32_char(*it++ & 0x3F) << 6 |
-                 u32_char(*it++ & 0x3F);
-            if (cp < 0x10000 || cp > 0x10FFFF)
-                return {};
-        }
-        else
-            return {};
-        out.push_back(cp);
-    }
-    return out;
+    static std::u32string P_cvtbuf;
+    P_cvt_u32(u8_str, &P_cvtbuf);
+    return make_vtx(brush, P_cvtbuf, x, y, align, max_w, scale);
 }
 
-font_render_bound font::make_vtx(brush *brush, const std::string &u8_str, double x, double y, double scale,
-                                 double max_w)
+font_render_bound font::make_vtx(brush *brush, const std::u32string &str, double x, double y, bitmask<font_align> align,
+                                 double max_w, double scale)
 {
-    std::u32string str = to_u32(u8_str);
-
     if (str.length() == 0 || str.length() > INT16_MAX)
         return {};
 
-    double h_scaled = scale * f_lspc;
-    double w = 0;
-    double lw = 0;
-    double h = 0;
-    double lh = 0;
-    double dx = x;
-    double dy = y;
-    bool endln = false;
-    int lns = 1;
-
-    for (int i = 0; i < (int)str.length(); i++)
+    if (align.test(font_align::LEFT) && align.test(font_align::UP))
     {
-        u32_char ch = str[i];
+        double h_scaled = scale * lspc;
+        double w = 0;
+        double lw = 0;
+        double h = 0;
+        double lh = 0;
+        double dx = x;
+        double dy = y;
+        bool endln = false;
+        int lns = 1;
 
-        if (ch == '\n' || endln)
+        for (int i = 0; i < (int)str.length(); i++)
         {
+            u32_char ch = str[i];
+
+            if (ch == '\n' || endln)
+            {
 #ifdef ARC_Y_IS_DOWN
-            dy += h_scaled;
+                dy += h_scaled;
 #else
-            dy -= h_scaled;
+                dy -= h_scaled;
 #endif
-            dx = x;
-            endln = false;
-            w = std::max(w, lw);
-            lw = 0;
-            h += h_scaled;
-            lh = 0;
-            lns++;
-            continue;
+                dx = x;
+                endln = false;
+                w = std::max(w, lw);
+                lw = 0;
+                h += h_scaled;
+                lh = 0;
+                lns++;
+                continue;
+            }
+
+            glyph g = get_glyph(ch) * scale;
+
+            if (dx - x + g.advance >= max_w)
+            {
+                endln = true;
+                i -= 1;
+                i = std::max(0, i - 1);
+                continue;
+            }
+
+            lh = std::max(g.size.y, lh);
+            lw += g.advance;
+
+            if (brush != nullptr)
+                brush->draw_texture(g.texpart, {dx + g.offset.x, dy + g.offset.y, g.size.x, g.size.y});
+            dx += g.advance;
+
+            if (i == (int)str.length() - 1 || (get_glyph(str[i + 1]) * scale).advance + dx - x >= max_w)
+                lw += g.size.x - g.advance;
         }
 
-        glyph g = get_glyph(ch) * scale;
-
-        if (dx - x + g.advance >= max_w)
-        {
-            endln = true;
-            i -= 1;
-            i = std::max(0, i - 1);
-            continue;
-        }
-
-        lh = std::max(g.size.y, lh);
-        lw += g.advance;
-
-        if (brush != nullptr)
-            brush->draw_texture(g.texpart, {dx + g.offset.x, dy + g.offset.y, g.size.x, g.size.y});
-        dx += g.advance;
-
-        if (i == (int)str.length() - 1 || (get_glyph(str[i + 1]) * scale).advance + dx - x >= max_w)
-            lw += g.size.x - g.advance;
+#ifdef ARC_Y_IS_DOWN
+        return font_render_bound(quad::corner(x, y, std::max(lw, w), h + height * scale), lw, lns);
+#else
+        return font_render_bound(quad::corner(x, dy, std::max(lw, w), h + f_height * scale), lw, lns);
+#endif
     }
 
-#ifdef ARC_Y_IS_DOWN
-    return font_render_bound(quad::corner(x, y, std::max(lw, w), h + f_height * scale), lw, lns);
-#else
-    return font_render_bound(quad::corner(x, dy, std::max(lw, w), h + f_height * scale), lw, lns);
-#endif
+    // align the positions
+    auto qd = make_vtx(nullptr, str, x, y, mask(font_align::UP, font_align::LEFT), max_w, scale);
+    double w = qd.region.width, h = qd.region.height;
+
+    if (align.test(font_align::DOWN))
+        y -= h;
+    if (align.test(font_align::V_CENTER))
+        y -= h / 2;
+    if (align.test(font_align::RIGHT))
+        x -= w;
+    if (align.test(font_align::H_CENTER))
+        x -= w / 2;
+
+    return make_vtx(brush, str, x, y, mask(font_align::UP, font_align::LEFT), max_w, scale);
 }
 
-shared<font> load_font(const hio_path &path, double res_h, double pixel_h)
+shared<font> load_font(const path_handle &path, double res_h, double pixel_h)
 {
     auto fptr = std::make_shared<font>();
 
@@ -210,14 +186,14 @@ shared<font> load_font(const hio_path &path, double res_h, double pixel_h)
     FT_New_Face(lib, path.absolute.c_str(), 0, &face);
     FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 
-    fptr->__p->face_ptr = face;
-    fptr->__p->lib_ptr = lib;
-    fptr->__p->res = res_h;
-    fptr->__p->pix = pixel_h;
-    fptr->f_height = pixel_h;
-    fptr->f_ascend = face->ascender / 64.0;
-    fptr->f_descend = face->descender / 64.0;
-    fptr->f_lspc = pixel_h + 1;
+    fptr->P_pimpl->face_ptr = face;
+    fptr->P_pimpl->lib_ptr = lib;
+    fptr->P_pimpl->res = res_h;
+    fptr->P_pimpl->pix = pixel_h;
+    fptr->height = pixel_h;
+    fptr->ascend = face->ascender / 64.0;
+    fptr->descend = face->descender / 64.0;
+    fptr->lspc = pixel_h + 1;
 
     return fptr;
 }

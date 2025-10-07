@@ -39,8 +39,8 @@ struct socket : packet_context
     void tick();
     void hold_alive(const uuid &id);
 
-    struct _impl;
-    unique<_impl> __p;
+    struct P_impl;
+    unique<P_impl> P_pimpl;
 };
 
 socket &get_gsocket_server();
