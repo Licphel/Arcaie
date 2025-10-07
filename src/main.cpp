@@ -28,14 +28,14 @@ using namespace arcaie::world;
 using namespace arcaie::ecs;
 
 int i;
-socket *sockc = get_gsocket_remote();
-socket *socks = get_gsocket_server();
+socket &sockc = get_gsocket_remote();
+socket &socks = get_gsocket_server();
 shared<gui> g;
 shared<gui_button> b;
 shared<gui_text_view> tv;
 shared<font> fnt;
 nine_patches pct;
-level_ecs_manager *elvl;
+level *elvl;
 
 struct posic
 {
@@ -61,11 +61,11 @@ int main()
     tk_size(vec2(800, 450));
     tk_end_make_handle();
 
-    elvl = new level_ecs_manager();
+    elvl = new level();
     entity_ref eref1 = elvl->make_entity();
     entity_ref eref2 = elvl->make_entity();
     entity_ref eref3 = elvl->make_entity();
-    elvl->add_system(ecs_phase::COMMON, [](level *lvl) {
+    elvl->add_system(ecs_phase::COMMON, [](level &lvl) {
         elvl->each<posic>("position",
                           [lvl](const entity_ref &ref, posic &cmp) { prtlog(ARC_INFO, std::to_string(cmp.x)); });
     });
@@ -73,8 +73,8 @@ int main()
     elvl->add_component("position", eref2, posic{2.5, 3.5});
     elvl->add_component("position", eref3, posic{3.5, 3.5});
 
-    auto* pool = elvl->get_pool<posic>("position");
-    auto* cmp = pool->get(eref2);
+    auto *pool = elvl->get_pool<posic>("position");
+    auto *cmp = pool->get(eref2);
 
     __log_redirect();
 
@@ -117,8 +117,8 @@ int main()
 
     g->display();
 
-    socks->start(8080);
-    sockc->connect(connection_type::lan_server, "127.0.0.1", 8080);
+    socks.start(8080);
+    sockc.connect(connection_type::lan_server, "127.0.0.1", 8080);
 
     tk_hook_event_tick([]() { elvl->tick_systems(); });
 

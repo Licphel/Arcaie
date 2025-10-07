@@ -9,15 +9,15 @@
 namespace arcaie
 {
 
-std::unordered_map<res_id, std::any> *__get_resource_map();
+std::unordered_map<res_id, std::any> &__get_resource_map();
 
 // get a loaded resource by its id.
 // if you are unsure if the resource is loaded, use #make_res_ref instead.
 template <typename T> T make_res(const res_id &id)
 {
-    const auto m = __get_resource_map();
-    auto it = m->find(id);
-    bool cf = it != m->end() && it->second.has_value();
+    const auto& m = __get_resource_map();
+    auto it = m.find(id);
+    bool cf = it != m.end() && it->second.has_value();
     return cf ? std::any_cast<T>(it->second) : std::decay_t<T>{};
 }
 
@@ -27,8 +27,8 @@ template <typename T> struct aref
 
     bool is_done() const
     {
-        const auto m = __get_resource_map();
-        return m->find(id) != m->end();
+        const auto& m = __get_resource_map();
+        return m.find(id) != m.end();
     }
 
     operator T() const

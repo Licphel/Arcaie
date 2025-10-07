@@ -81,12 +81,12 @@ void tk_make_handle()
         prtlog_throw(ARC_FATAL, "glew cannot initialize.");
 
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int nw, int nh) {
-        for (auto e : event_resize)
+        for (auto& e : event_resize)
             e(nw, nh);
     });
     glfwSetMouseButtonCallback(window, [](GLFWwindow *, int button, int action, int mods) {
         button += 480; /* **magic number** _TK_MOUSE_OFFSET */
-        for (auto e : event_mouse_state)
+        for (auto& e : event_mouse_state)
             e(button, action, mods);
         keydown[button] = clock::now().ticks;
         keydown_render[button] = clock::now().render_ticks;
@@ -94,13 +94,13 @@ void tk_make_handle()
         keymod[button] = mods;
     });
     glfwSetScrollCallback(window, [](GLFWwindow *, double x, double y) {
-        for (auto e : event_mouse_scroll)
+        for (auto& e : event_mouse_scroll)
             e(x, y);
         mscx = x;
         mscy = y;
     });
     glfwSetCursorPosCallback(window, [](GLFWwindow *, double x, double y) {
-        for (auto e : event_cursor_pos)
+        for (auto& e : event_cursor_pos)
             e(x, y);
         mcx = x;
 #ifdef ARC_Y_IS_DOWN
@@ -110,7 +110,7 @@ void tk_make_handle()
 #endif
     });
     glfwSetKeyCallback(window, [](GLFWwindow *, int button, int scancode, int action, int mods) {
-        for (auto e : event_key_state)
+        for (auto& e : event_key_state)
             e(button, scancode, action, mods);
         keydown[button] = clock::now().ticks;
         keydown_render[button] = clock::now().render_ticks;
@@ -270,7 +270,7 @@ void tk_lifecycle(int fps, int tps, bool vsync)
             while (logic_debt >= DT_LOGIC_NS && max_catch--)
             {
                 __cur_in_tick = true;
-                for (auto e : event_tick)
+                for (auto& e : event_tick)
                     e();
                 __cur_in_tick = false;
                 clock::now().ticks++;
@@ -284,7 +284,7 @@ void tk_lifecycle(int fps, int tps, bool vsync)
                 clock::now().partial = std::clamp(1.0 - (logic_debt / DT_LOGIC_NS), 0.0, 1.0);
 
                 auto brush = direct_mesh->brush_binded.get();
-                for (auto e : event_render)
+                for (auto& e : event_render)
                     e(brush);
                 clock::now().render_ticks++;
                 brush->flush();
@@ -312,7 +312,7 @@ void tk_lifecycle(int fps, int tps, bool vsync)
         throw e;
     }
 
-    for (auto e : event_dispose)
+    for (auto& e : event_dispose)
         e();
 }
 

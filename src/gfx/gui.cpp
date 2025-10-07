@@ -46,7 +46,7 @@ void gui::display()
 {
     CURRENTS.push_back(shared_from_this());
     if (on_displayed)
-        on_displayed(this);
+        on_displayed(*this);
 }
 
 void gui::close()
@@ -55,7 +55,7 @@ void gui::close()
         std::remove_if(CURRENTS.begin(), CURRENTS.end(), [this](const shared<gui> &g) { return g.get() == this; }),
         CURRENTS.end());
     if (on_closed)
-        on_closed(this);
+        on_closed(*this);
 }
 
 bool gui::is_top()
@@ -66,7 +66,7 @@ bool gui::is_top()
 
 void gui::render(brush *brush)
 {
-    auto cam = get_gui_camera();
+    auto& cam = get_gui_camera();
     // do not refer to the old camera - it will change soon.
     auto old_cam = brush->camera_binded;
     brush->use(cam);
@@ -85,7 +85,7 @@ void gui::render(brush *brush)
 
 void gui::tick()
 {
-    auto cam = get_gui_camera();
+    auto& cam = get_gui_camera();
 
     bool top = is_top();
     if (!top)

@@ -31,8 +31,8 @@ struct gui : std::enable_shared_from_this<gui>
     static void tick_currents();
 
     std::vector<shared<gui_component>> __components;
-    std::function<void(gui *g)> on_closed;
-    std::function<void(gui *g)> on_displayed;
+    std::function<void(gui &g)> on_closed;
+    std::function<void(gui &g)> on_displayed;
     shared<gui_component> focus;
 
     void join(shared<gui_component> comp);

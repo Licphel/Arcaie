@@ -11,9 +11,9 @@ namespace arcaie
 
 std::unordered_map<res_id, std::any> __resource_map;
 
-std::unordered_map<res_id, std::any> *__get_resource_map()
+std::unordered_map<res_id, std::any> &__get_resource_map()
 {
-    return &__resource_map;
+    return __resource_map;
 }
 
 void asset_loader::scan(const hio_path &path_root)
@@ -65,7 +65,7 @@ void asset_loader::next()
         progress = 1;
 
         bool can_find = false;
-        for (auto sub : subloaders)
+        for (auto& sub : subloaders)
         {
             if (sub->progress < 1)
             {

@@ -52,7 +52,7 @@ void __write_primitive(byte_buf &buf, const binary_value &v)
 
 void __write_map(byte_buf &buf, const binary_map &map)
 {
-    for (auto kv : map.data)
+    for (auto& kv : map.data)
     {
         std::string str = kv.first;
         binary_value v = kv.second;
@@ -67,7 +67,7 @@ void __write_map(byte_buf &buf, const binary_map &map)
 void __write_array(byte_buf &buf, const binary_array &arr)
 {
     buf.write<size_t>(arr.size());
-    for (auto bv : arr.data)
+    for (auto& bv : arr.data)
         __write_primitive(buf, bv);
 }
 

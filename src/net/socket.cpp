@@ -481,14 +481,14 @@ void socket::hold_alive(const uuid &id)
 static socket __gsocket_s;
 static socket __gsocket_c;
 
-socket *get_gsocket_server()
+socket &get_gsocket_server()
 {
-    return &__gsocket_s;
+    return __gsocket_s;
 }
 
-socket *get_gsocket_remote()
+socket &get_gsocket_remote()
 {
-    return &__gsocket_c;
+    return __gsocket_c;
 }
 
 } // namespace arcaie::net

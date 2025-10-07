@@ -12,12 +12,12 @@ template <typename T> struct registry;
 
 template <typename T> struct ref
 {
-    registry<T> *reg;
+    registry<T> &reg;
     int idx;
 
     operator T()
     {
-        return *reg[idx];
+        return reg[idx];
     }
 };
 
@@ -36,7 +36,7 @@ template <typename T> struct registry
             map[id].reg_index = idx;
             map[id].reg_id = id;
         });
-        return {this, idx};
+        return {*this, idx};
     }
 
     void work()

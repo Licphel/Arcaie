@@ -43,7 +43,7 @@ struct socket : packet_context
     unique<_impl> __p;
 };
 
-socket *get_gsocket_server();
-socket *get_gsocket_remote();
+socket &get_gsocket_server();
+socket &get_gsocket_remote();
 
 } // namespace arcaie::net

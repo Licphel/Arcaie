@@ -96,7 +96,7 @@ hpath_type hio_judge(const hio_path &path)
 std::vector<hio_path> hio_sub_dirs(const hio_path &path)
 {
     std::vector<hio_path> paths;
-    for (auto k : fs::directory_iterator(path.__npath))
+    for (auto& k : fs::directory_iterator(path.__npath))
     {
         if (k.is_directory())
             paths.push_back(hio_path(k.path().string()));
@@ -107,7 +107,7 @@ std::vector<hio_path> hio_sub_dirs(const hio_path &path)
 std::vector<hio_path> hio_sub_files(const hio_path &path)
 {
     std::vector<hio_path> paths;
-    for (auto k : fs::directory_iterator(path.__npath))
+    for (auto& k : fs::directory_iterator(path.__npath))
     {
         if (k.is_regular_file())
             paths.push_back(hio_path(k.path().string()));
@@ -118,7 +118,7 @@ std::vector<hio_path> hio_sub_files(const hio_path &path)
 std::vector<hio_path> hio_recurse_files(const hio_path &path)
 {
     std::vector<hio_path> paths;
-    for (auto k : fs::recursive_directory_iterator(path.__npath))
+    for (auto& k : fs::recursive_directory_iterator(path.__npath))
     {
         if (k.is_regular_file())
             paths.push_back(hio_path(k.path().string()));
