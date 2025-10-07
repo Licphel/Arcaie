@@ -8,14 +8,14 @@
 namespace arcaie::gfx
 {
 
-enum font_render_align
+enum class font_render_align : long long
 {
-    ARC_FONT_LEFT_ALIGN = 1LL << 0,
-    ARC_FONT_RIGHT_ALIGN = 1LL << 1,
-    ARC_FONT_H_CENTER_ALIGN = 1LL << 2,
-    ARC_FONT_UP_ALIGN = 1LL << 3,
-    ARC_FONT_DOWN_ALIGN = 1LL << 4,
-    ARC_FONT_V_CENTER_ALIGN = 1LL << 5
+    LEFT = 1LL << 0,
+    RIGHT = 1LL << 1,
+    H_CENTER = 1LL << 2,
+    UP = 1LL << 3,
+    DOWN = 1LL << 4,
+    V_CENTER = 1LL << 5
 };
 
 struct glyph

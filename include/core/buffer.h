@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <core/def.h>
 #include <core/log.h>
+#include <core/uuid.h>
 
 namespace arcaie
 {
@@ -73,6 +74,7 @@ struct byte_buf
     void write_bytes(const void *src, size_t len);
     void write_byte_buf(const byte_buf &buf);
     void write_string(const std::string &str);
+    void write_uuid(const uuid& id);
 
     template <typename T> typename std::enable_if<std::is_arithmetic<T>::value, T>::type read()
     {
@@ -86,6 +88,7 @@ struct byte_buf
     void read_bytes(void *dst, size_t len);
     byte_buf read_byte_buf();
     std::string read_string();
+    uuid read_uuid();
 
     template <typename T> T peek() const
     {

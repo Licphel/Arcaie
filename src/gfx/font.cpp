@@ -71,7 +71,8 @@ glyph font::make_glyph(u32_char ch)
 
     glyph g;
     g.texpart = __flush_codemap(__p.get(), ch, img);
-    set_texture_parameters(g.texpart, texture_parameters(ARC_UV_CLAMP, ARC_FILTER_LINEAR, ARC_FILTER_LINEAR));
+    set_texture_parameters(g.texpart, texture_parameters(texture_parameter::UV_CLAMP, texture_parameter::FILTER_LINEAR,
+                                                         texture_parameter::FILTER_LINEAR));
     g.size.x = ch == ' ' ? face->glyph->metrics.horiAdvance / ds / 64.0 : face->glyph->metrics.width / ds / 64.0;
     g.size.y = face->glyph->metrics.height / ds / 64.0;
     g.advance = face->glyph->advance.x / ds / 64.0;

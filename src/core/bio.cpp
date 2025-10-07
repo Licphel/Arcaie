@@ -149,13 +149,13 @@ byte_buf bio_write_buf(const binary_map &map)
 
 binary_map bio_read(const hio_path &path)
 {
-    byte_buf buf = byte_buf(hio_read_bytes(path, ARC_COMP_DCMP_READ));
+    byte_buf buf = byte_buf(hio_read_bytes(path, compression_level::DCMP_READ));
     return bio_read_buf(buf);
 }
 
 void bio_write(const binary_map &map, const hio_path &path)
 {
-    hio_write_bytes(path, bio_write_buf(map).to_vector(), ARC_COMP_OPTIMAL);
+    hio_write_bytes(path, bio_write_buf(map).to_vector(), compression_level::OPTIMAL);
 }
 
 class __binparser

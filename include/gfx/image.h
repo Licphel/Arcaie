@@ -35,20 +35,20 @@ struct texture
     ~texture();
 };
 
-enum texture_parameter
+enum class texture_parameter
 {
-    ARC_UV_REPEAT,
-    ARC_UV_CLAMP,
-    ARC_UV_MIRROR,
-    ARC_FILTER_NEAREST,
-    ARC_FILTER_LINEAR
+    UV_REPEAT,
+    UV_CLAMP,
+    UV_MIRROR,
+    FILTER_NEAREST,
+    FILTER_LINEAR
 };
 
 struct texture_parameters
 {
-    texture_parameter uv = ARC_UV_REPEAT;
-    texture_parameter min_filter = ARC_FILTER_NEAREST;
-    texture_parameter mag_filter = ARC_FILTER_NEAREST;
+    texture_parameter uv = texture_parameter::UV_REPEAT;
+    texture_parameter min_filter = texture_parameter::FILTER_NEAREST;
+    texture_parameter mag_filter = texture_parameter::FILTER_NEAREST;
 };
 
 shared<image> load_image(const hio_path &path);

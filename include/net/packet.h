@@ -3,6 +3,7 @@
 #include <core/hio.h>
 #include <core/uuid.h>
 #include <functional>
+#include <map>
 
 #define ARC_USE_BUILTIN_PACKETS
 

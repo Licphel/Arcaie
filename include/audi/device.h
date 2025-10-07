@@ -6,12 +6,12 @@
 namespace arcaie::audi
 {
 
-enum device_option
+enum class device_option
 {
-    ARC_AUDIO_LISTENER,
-    ARC_AUDIO_ROLLOFF,
-    ARC_AUDIO_REFERENCE_DIST,
-    ARC_AUDIO_MAX_DIST
+    LISTENER,
+    ROLLOFF,
+    REFERENCE_DIST,
+    MAX_DIST
 };
 
 struct track
@@ -22,24 +22,24 @@ struct track
     ~track();
 };
 
-enum clip_op
+enum class clip_op
 {
-    ARC_CLIP_LOCATION,
-    ARC_CLIP_GAIN,
-    ARC_CLIP_PITCH,
+    LOCATION,
+    GAIN,
+    PITCH,
 
-    ARC_CLIP_LOOP,
-    ARC_CLIP_PLAY,
-    ARC_CLIP_PAUSE,
-    ARC_CLIP_STOP
+    LOOP,
+    PLAY,
+    PAUSE,
+    STOP
 };
 
-enum clip_status
+enum class clip_status
 {
-    ARC_CLIP_PLAYING,
-    ARC_CLIP_IDLE,
-    ARC_CLIP_END,
-    ARC_CLIP_PAUSED
+    PLAYING,
+    IDLE,
+    END,
+    PAUSED
 };
 
 struct clip

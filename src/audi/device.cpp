@@ -26,46 +26,46 @@ clip_status clip::status()
     int sts;
     alGetSourcei(__clip_id, AL_SOURCE_STATE, &sts);
     if (sts == AL_STOPPED)
-        return ARC_CLIP_END;
+        return clip_status::END;
     if (sts == AL_PLAYING)
-        return ARC_CLIP_PLAYING;
+        return clip_status::PLAYING;
     if (sts == AL_INITIAL)
-        return ARC_CLIP_IDLE;
-    return ARC_CLIP_PAUSED;
+        return clip_status::IDLE;
+    return clip_status::PAUSED;
 }
 
 void clip::set(clip_op param, double v)
 {
-    if (param == ARC_CLIP_GAIN)
+    if (param == clip_op::GAIN)
         alSourcef(__clip_id, AL_GAIN, v);
-    else if (param == ARC_CLIP_PITCH)
+    else if (param == clip_op::PITCH)
         alSourcef(__clip_id, AL_PITCH, v);
 }
 
 void clip::set(clip_op param, const vec2 &v)
 {
-    if (param == ARC_CLIP_LOCATION)
+    if (param == clip_op::LOCATION)
         alSource3f(__clip_id, AL_POSITION, v.x, v.y, 0);
 }
 
 void clip::set(clip_op param, const vec3 &v)
 {
-    if (param == ARC_CLIP_LOCATION)
+    if (param == clip_op::LOCATION)
         alSource3f(__clip_id, AL_POSITION, v.x, v.y, 0);
 }
 
 void clip::operate(clip_op param)
 {
-    if (param == ARC_CLIP_PLAY)
+    if (param == clip_op::PLAY)
         alSourcePlay(__clip_id);
-    else if (param == ARC_CLIP_LOOP)
+    else if (param == clip_op::LOOP)
     {
         alSourcei(__clip_id, AL_LOOPING, AL_TRUE);
         alSourcePlay(__clip_id);
     }
-    else if (param == ARC_CLIP_PAUSE)
+    else if (param == clip_op::PAUSE)
         alSourcePause(__clip_id);
-    else if (param == ARC_CLIP_STOP)
+    else if (param == clip_op::STOP)
         alSourceStop(__clip_id);
 }
 
@@ -83,7 +83,7 @@ void __process_tracks()
     while (it != clip_r.end())
     {
         auto &cl = *it;
-        if (cl->status() == ARC_CLIP_END)
+        if (cl->status() == clip_status::END)
             it = clip_r.erase(it);
         else
             ++it;
@@ -227,24 +227,24 @@ shared<clip> make_clip(shared<track> track)
 
 void tk_set_device_option(device_option opt, double v)
 {
-    if (opt == ARC_AUDIO_ROLLOFF)
+    if (opt == device_option::ROLLOFF)
         rolloff = v;
-    else if (opt == ARC_AUDIO_REFERENCE_DIST)
+    else if (opt == device_option::REFERENCE_DIST)
         ref_dist = v;
-    else if (opt == ARC_AUDIO_MAX_DIST)
+    else if (opt == device_option::MAX_DIST)
         max_dist = v;
 }
 
 void tk_set_device_option(device_option opt, const vec2 &v)
 {
-    if (opt == ARC_AUDIO_LISTENER)
+    if (opt == device_option::LISTENER)
         alListener3f(AL_POSITION, v.x, v.y, 0);
 }
 
 void tk_set_device_option(device_option opt, const vec3 &v)
 {
-    if (opt == ARC_AUDIO_LISTENER)
+    if (opt == device_option::LISTENER)
         alListener3f(AL_POSITION, v.x, v.y, v.z);
 }
 
-} // namespace arcaie::adv
+} // namespace arcaie::audi

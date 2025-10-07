@@ -102,6 +102,11 @@ void byte_buf::write_string(const std::string &str)
     write_bytes(str.data(), str.size());
 }
 
+void byte_buf::write_uuid(const uuid &id)
+{
+    write_bytes(id.bytes, 16);
+}
+
 void byte_buf::read_bytes(void *dst, size_t len)
 {
     ensure_readable(len);
@@ -126,6 +131,14 @@ std::string byte_buf::read_string()
     std::string str(reinterpret_cast<const char *>(__data.data() + __rpos), len);
     __rpos += len;
     return str;
+}
+
+uuid byte_buf::read_uuid()
+{
+    ensure_readable(16);
+    uuid u = uuid_null();
+    read_bytes(u.bytes, 16);
+    return u;
 }
 
 void byte_buf::skip(size_t len)

@@ -76,8 +76,8 @@ bool hio_exists(const hio_path &path)
 
 void hio_mkdirs(const hio_path &path)
 {
-    fs::create_directories(hio_judge(path) == ARC_DIR ? path.__npath : hio_parent(path).__npath);
-    if (hio_judge(path) == ARC_FILE)
+    fs::create_directories(hio_judge(path) == hpath_type::DIR ? path.__npath : hio_parent(path).__npath);
+    if (hio_judge(path) == hpath_type::FILE)
     {
         std::ofstream stream(path.__npath);
         stream.close();
@@ -87,10 +87,10 @@ void hio_mkdirs(const hio_path &path)
 hpath_type hio_judge(const hio_path &path)
 {
     if (fs::is_directory(path.__npath))
-        return ARC_DIR;
+        return hpath_type::DIR;
     if (fs::is_regular_file(path.__npath))
-        return ARC_FILE;
-    return ARC_UNKNOWN;
+        return hpath_type::FILE;
+    return hpath_type::UNKNOWN;
 }
 
 std::vector<hio_path> hio_sub_dirs(const hio_path &path)
@@ -186,7 +186,7 @@ std::vector<byte> hio_read_bytes(const hio_path &path, compression_level clvl)
     if (!file)
         prtlog_throw(ARC_FATAL, "short read in {}", path.absolute);
 
-    if (clvl == ARC_COMP_RAW_READ)
+    if (clvl == compression_level::RAW_READ)
         return raw;
 
     return hio_decompress(raw);
@@ -220,16 +220,16 @@ std::vector<byte> hio_compress(std::vector<byte> buf, compression_level clvl)
     std::vector<byte> out;
     switch (clvl)
     {
-    case ARC_COMP_NO:
+    case compression_level::NO:
         out = buf;
         break;
-    case ARC_COMP_FASTEST:
+    case compression_level::FASTEST:
         out = brotli_compress(buf, 1);
         break;
-    case ARC_COMP_OPTIMAL:
+    case compression_level::OPTIMAL:
         out = brotli_compress(buf, 6);
         break;
-    case ARC_COMP_SMALLEST:
+    case compression_level::SMALLEST:
         out = brotli_compress(buf, 11);
         break;
     default:

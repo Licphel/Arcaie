@@ -69,15 +69,15 @@ template <typename T> aref<T> make_res_ref(const res_id &id)
 
 shared<asset_loader> make_loader(const std::string &scope, const hio_path &root);
 
-enum asset_loader_equip
+enum class asset_loader_equip
 {
-    ARC_LOAD_PNG_AS_TEXTURE,
-    ARC_LOAD_PNG_AS_IMAGE,
-    ARC_LOAD_TXT,
-    ARC_LOAD_FONT,
-    ARC_LOAD_SHADER,
-    ARC_LOAD_WAVE,
-    ARC_LOAD_SCRIPT
+    PNG_AS_TEXTURE,
+    PNG_AS_IMAGE,
+    TXT,
+    FONT,
+    SHADER,
+    WAVE,
+    SCRIPT
 };
 
 // add a built-in loader behavior to the loader.

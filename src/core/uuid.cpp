@@ -2,20 +2,19 @@
 #include <chrono>
 #include <random>
 #include <core/def.h>
+#include <cstring>
 
 namespace arcaie
 {
 
 bool uuid::operator==(const uuid &other) const
 {
-    if (__hash != other.__hash)
-        return false;
-    return bytes == other.bytes;
+    return std::memcmp(bytes, other.bytes, 16) == 0;
 }
 
 bool uuid::operator<(const uuid &other) const
 {
-    return bytes < other.bytes;
+    return std::memcmp(bytes, other.bytes, 16) < 0;
 }
 
 uuid::operator std::string() const
@@ -56,8 +55,7 @@ uuid uuid_generate()
     for (int i = 8; i < 16; i++)
         u.bytes[i] = dis(gen);
 
-    u.__hash =
-        std::hash<std::string_view>{}(std::string_view(reinterpret_cast<const char *>(u.bytes.data()), u.bytes.size()));
+    u.__hash = std::hash<std::string_view>{}(std::string_view(reinterpret_cast<const char *>(u.bytes), 16));
 
     return u;
 }

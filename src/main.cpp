@@ -17,12 +17,15 @@
 #include <gfx/gui.h>
 #include <lua/lua.h>
 #include <core/input.h>
+#include <world/level.h>
 
 using namespace arcaie;
 using namespace arcaie::gfx;
 using namespace arcaie::net;
 using namespace arcaie::audi;
 using namespace arcaie::lua;
+using namespace arcaie::world;
+using namespace arcaie::ecs;
 
 int i;
 socket *sockc = get_gsocket_remote();
@@ -32,6 +35,24 @@ shared<gui_button> b;
 shared<gui_text_view> tv;
 shared<font> fnt;
 nine_patches pct;
+level_ecs_manager *elvl;
+
+struct posic
+{
+    double x, y;
+
+    void write(byte_buf &buf)
+    {
+        buf.write<double>(x);
+        buf.write<double>(y);
+    }
+
+    void read(byte_buf &buf)
+    {
+        x = buf.read<double>();
+        y = buf.read<double>();
+    }
+};
 
 int main()
 {
@@ -39,6 +60,21 @@ int main()
     tk_title("Arcaie");
     tk_size(vec2(800, 450));
     tk_end_make_handle();
+
+    elvl = new level_ecs_manager();
+    entity_ref eref1 = elvl->make_entity();
+    entity_ref eref2 = elvl->make_entity();
+    entity_ref eref3 = elvl->make_entity();
+    elvl->add_system(ecs_phase::COMMON, [](level *lvl) {
+        elvl->each<posic>("position",
+                          [lvl](const entity_ref &ref, posic &cmp) { prtlog(ARC_INFO, std::to_string(cmp.x)); });
+    });
+    elvl->add_component("position", eref1, posic{1.5, 3.5});
+    elvl->add_component("position", eref2, posic{2.5, 3.5});
+    elvl->add_component("position", eref3, posic{3.5, 3.5});
+
+    auto* pool = elvl->get_pool<posic>("position");
+    auto* cmp = pool->get(eref2);
 
     __log_redirect();
 
@@ -59,11 +95,11 @@ int main()
         region = quad::center(view.center_x(), view.center_y(), 200, 40);
     };
     b->on_render = [](brush *brush, gui_button *cmp) {
-        if (cmp->curstate == gui_button::IDLE)
+        if (cmp->curstate == button_state::IDLE)
             brush->cl_set(color(1, 1, 1, 1));
-        else if (cmp->curstate == gui_button::HOVERING)
+        else if (cmp->curstate == button_state::HOVERING)
             brush->cl_set(color(0.8, 0.8, 1, 1));
-        else if (cmp->curstate == gui_button::PRESSED)
+        else if (cmp->curstate == button_state::PRESSED)
             brush->cl_set(color(0.6, 0.6, 1, 1));
         pct.make_vtx(brush, b->region);
         brush->cl_norm();
@@ -84,12 +120,12 @@ int main()
     socks->start(8080);
     sockc->connect(connection_type::lan_server, "127.0.0.1", 8080);
 
-    tk_hook_event_tick([]() {});
+    tk_hook_event_tick([]() { elvl->tick_systems(); });
 
     tk_hook_event_render([](brush *brush) {
         brush->clear({0, 0, 0, 1});
         brush->use(get_absolute_camera());
-        brush->use(ARC_NORMAL_BLEND);
+        brush->use(blend_mode::NORMAL);
         gui::tick_currents();
         gui::render_currents(brush);
 
@@ -98,12 +134,14 @@ int main()
         lua_get<lua_function>("draw")(brush);
     });
 
+    tk_make_device();
+    tk_set_device_option(device_option::ROLLOFF, 2.0);
+    tk_set_device_option(device_option::REFERENCE_DIST, 8.0);
+    tk_set_device_option(device_option::MAX_DIST, 42.0);
+    tk_set_device_option(device_option::LISTENER, vec3(0, 0, 0));
+    tk_end_make_device();
+
     tk_lifecycle(0, 20, false);
 
-    tk_make_device();
-    tk_set_device_option(ARC_AUDIO_ROLLOFF, 2.0);
-    tk_set_device_option(ARC_AUDIO_REFERENCE_DIST, 8.0);
-    tk_set_device_option(ARC_AUDIO_MAX_DIST, 42.0);
-    tk_set_device_option(ARC_AUDIO_LISTENER, vec3(0, 0, 0));
-    tk_end_make_device();
+    delete elvl;
 }

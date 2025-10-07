@@ -72,19 +72,19 @@ void set_texture_parameters(shared<texture> tex, texture_parameters param)
     GLenum mode0;
     switch (param.uv)
     {
-    case ARC_UV_CLAMP:
+    case texture_parameter::UV_CLAMP:
         mode0 = GL_CLAMP_TO_EDGE;
         break;
-    case ARC_UV_MIRROR:
+    case texture_parameter::UV_MIRROR:
     default:
         mode0 = GL_MIRRORED_REPEAT;
         break;
-    case ARC_UV_REPEAT:
+    case texture_parameter::UV_REPEAT:
         mode0 = GL_REPEAT;
         break;
     }
-    GLenum mode1 = param.min_filter == ARC_FILTER_LINEAR ? GL_LINEAR : GL_NEAREST;
-    GLenum mode2 = param.mag_filter == ARC_FILTER_LINEAR ? GL_LINEAR : GL_NEAREST;
+    GLenum mode1 = param.min_filter == texture_parameter::FILTER_LINEAR ? GL_LINEAR : GL_NEAREST;
+    GLenum mode2 = param.mag_filter == texture_parameter::FILTER_LINEAR ? GL_LINEAR : GL_NEAREST;
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, mode0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, mode0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mode1);

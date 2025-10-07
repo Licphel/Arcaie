@@ -9,12 +9,12 @@
 namespace arcaie::gfx
 {
 
-enum shader_vertex_data_type
+enum class shader_vertex_data_type
 {
-    ARC_VDAT_BYTE,
-    ARC_VDAT_INT,
-    ARC_VDAT_HALF_FLOAT,
-    ARC_VDAT_FLOAT
+    BYTE,
+    INT,
+    HALF_FLOAT,
+    FLOAT
 };
 
 struct shader_attrib
@@ -56,10 +56,10 @@ struct shader_program
     shader_uniform cache_uniform(const std::string &name);
 };
 
-enum builtin_shader_type
+enum class builtin_shader_type
 {
-    ARC_BUILTIN_SHADER_TEXTURED,
-    ARC_BUILTIN_SHADER_COLORED
+    TEXTURED,
+    COLORED
 };
 
 shared<shader_program> make_program(const std::string &vert, const std::string &frag,

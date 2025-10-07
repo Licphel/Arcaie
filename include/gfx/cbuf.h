@@ -8,15 +8,15 @@
 namespace arcaie::gfx
 {
 
-enum graph_mode
+enum class graph_mode
 {
-    ARC_COLORED_POINT = 0,
-    ARC_COLORED_LINE = 1,
-    ARC_COLORED_TRIANGLE = 2,
-    ARC_COLORED_QUAD = 3,
+    COLORED_POINT = 0,
+    COLORED_LINE = 1,
+    COLORED_TRIANGLE = 2,
+    COLORED_QUAD = 3,
 
     // ARC_TEXTURED_TRIANGLE = 16, <-- not implemented yet
-    ARC_TEXTURED_QUAD = 17
+    TEXTURED_QUAD = 17
 };
 
 // currently it only supports quad-drawing indexing.

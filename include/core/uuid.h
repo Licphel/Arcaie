@@ -1,14 +1,13 @@
 #pragma once
 #include <vector>
 #include <core/def.h>
-#include <core/rand.h>
 
 namespace arcaie
 {
 
 struct uuid
 {
-    std::vector<byte> bytes = std::vector<byte>(16, (byte)0);
+    byte bytes[16] = {0};
     size_t __hash;
 
     uuid() = default;

@@ -24,18 +24,16 @@ struct hio_path
     std::string file_format() const;
     // get the subdir
     hio_path operator/(const std::string &name) const;
-    // simply append the file
-    hio_path operator+(const std::string &name) const;
     // get the relative path, say 'minus' the #path from #this path.
     // for example, "C:/dir/file.txt" - "C:/dir" = "file.txt".
     std::string operator-(const hio_path &path) const;
 };
 
-enum hpath_type
+enum class hpath_type
 {
-    ARC_DIR,
-    ARC_FILE,
-    ARC_UNKNOWN
+    DIR,
+    FILE,
+    UNKNOWN
 };
 
 // open a absolute path.
@@ -58,23 +56,24 @@ std::vector<hio_path> hio_sub_files(const hio_path &path);
 std::vector<hio_path> hio_recurse_files(const hio_path &path);
 hio_path hio_execution_path();
 
-enum compression_level
+enum class compression_level
 {
-    ARC_COMP_NO = 0,
-    ARC_COMP_FASTEST = 1,
-    ARC_COMP_OPTIMAL = 2,
-    ARC_COMP_SMALLEST = 3,
+    NO = 0,
+    FASTEST = 1,
+    OPTIMAL = 2,
+    SMALLEST = 3,
 
-    ARC_COMP_RAW_READ = 8,
-    ARC_COMP_DCMP_READ = 9
+    RAW_READ = 8,
+    DCMP_READ = 9
 };
 
-// note: if you want to read a compressed file, use ARC_COMP_DCMP_READ instead of ARC_COMP_RAW_READ.
-std::vector<byte> hio_read_bytes(const hio_path &path, compression_level clvl = ARC_COMP_RAW_READ);
-void hio_write_bytes(const hio_path &path, const std::vector<byte> &data, compression_level clvl = ARC_COMP_NO);
+// note: if you want to read a compressed file, use compression_level::DCMP_READ instead of compression_level::RAW_READ.
+std::vector<byte> hio_read_bytes(const hio_path &path, compression_level clvl = compression_level::RAW_READ);
+void hio_write_bytes(const hio_path &path, const std::vector<byte> &data,
+                     compression_level clvl = compression_level::NO);
 std::string hio_read_str(const hio_path &path);
 void hio_write_str(const hio_path &path, const std::string &text);
-std::vector<byte> hio_compress(std::vector<byte> buf, compression_level clvl = ARC_COMP_OPTIMAL);
+std::vector<byte> hio_compress(std::vector<byte> buf, compression_level clvl = compression_level::OPTIMAL);
 std::vector<byte> hio_decompress(std::vector<byte> buf);
 
 } // namespace arcaie

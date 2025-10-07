@@ -39,8 +39,8 @@ brush::brush()
 {
     cl_norm();
     ts_push();
-    __default_colored = make_program(ARC_BUILTIN_SHADER_COLORED);
-    __default_textured = make_program(ARC_BUILTIN_SHADER_TEXTURED);
+    __default_colored = make_program(builtin_shader_type::COLORED);
+    __default_textured = make_program(builtin_shader_type::TEXTURED);
 }
 
 shared<complex_buffer> brush::lock_buffer()
@@ -174,7 +174,7 @@ void brush::flush()
     else
         switch (m_state.mode)
         {
-        case ARC_TEXTURED_QUAD:
+        case graph_mode::TEXTURED_QUAD:
             program_used = __default_textured;
             break;
         default:
@@ -205,7 +205,7 @@ void brush::flush()
     else
         program_used->cached_uniforms[0].set(get_combined_transform());
 
-    if (m_state.mode == ARC_TEXTURED_QUAD || m_state.mode == ARC_COLORED_QUAD)
+    if (m_state.mode == graph_mode::TEXTURED_QUAD || m_state.mode == graph_mode::COLORED_QUAD)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, msh->__ebo);
         if (buf->__icap_changed)
@@ -218,20 +218,20 @@ void brush::flush()
 
     switch (m_state.mode)
     {
-    case ARC_TEXTURED_QUAD:
+    case graph_mode::TEXTURED_QUAD:
         bind_texture(1, m_state.texture);
         glDrawElements(GL_TRIANGLES, buf->index_count, GL_UNSIGNED_INT, 0);
         break;
-    case ARC_COLORED_QUAD:
+    case graph_mode::COLORED_QUAD:
         glDrawElements(GL_TRIANGLES, buf->index_count, GL_UNSIGNED_INT, 0);
         break;
-    case ARC_COLORED_LINE:
+    case graph_mode::COLORED_LINE:
         glDrawArrays(GL_LINES, 0, buf->vertex_count);
         break;
-    case ARC_COLORED_POINT:
+    case graph_mode::COLORED_POINT:
         glDrawArrays(GL_POINTS, 0, buf->vertex_count);
         break;
-    case ARC_COLORED_TRIANGLE:
+    case graph_mode::COLORED_TRIANGLE:
         glDrawArrays(GL_TRIANGLES, 0, buf->vertex_count);
         break;
     default:
@@ -272,13 +272,13 @@ void brush::assert_texture(shared<texture> tex)
     }
 }
 
-void brush::draw_texture(shared<texture> tex, const quad &dst, const quad &src, brush_flag flag)
+void brush::draw_texture(shared<texture> tex, const quad &dst, const quad &src, bitmask<brush_flag> flag)
 {
     if (tex == nullptr)
         return;
     auto buf = lock_buffer();
 
-    assert_mode(ARC_TEXTURED_QUAD);
+    assert_mode(graph_mode::TEXTURED_QUAD);
     assert_texture(tex);
 
     float u = (src.x + tex->u) / tex->fwidth;
@@ -286,12 +286,12 @@ void brush::draw_texture(shared<texture> tex, const quad &dst, const quad &src, 
     float u2 = (src.prom_x() + tex->u) / tex->fwidth;
     float v2 = (src.prom_y() + tex->v) / tex->fheight;
 
-    if (flag & ARC_BFLAG_FLIP_X)
+    if (flag.test(brush_flag::FLIP_X))
         std::swap(u, u2);
 #ifdef ARC_Y_IS_DOWN
-    if (!(flag & ARC_BFLAG_FLIP_Y))
+    if (!flag.test(brush_flag::FLIP_Y))
 #else
-    if ((flag & ARC_BFLAG_FLIP_Y))
+    if ((flag & brush_flag::FLIP_Y))
 #endif
         std::swap(v, v2);
 
@@ -316,7 +316,7 @@ void brush::draw_texture(shared<texture> tex, const quad &dst, const quad &src, 
     buf->end_quad();
 }
 
-void brush::draw_texture(shared<texture> tex, const quad &dst, brush_flag flag)
+void brush::draw_texture(shared<texture> tex, const quad &dst, bitmask<brush_flag> flag)
 {
     if (tex != nullptr)
         draw_texture(tex, dst, quad(0.0, 0.0, tex->width, tex->height), flag);
@@ -326,7 +326,7 @@ void brush::draw_rect(const quad &dst)
 {
     auto buf = lock_buffer();
 
-    assert_mode(ARC_COLORED_QUAD);
+    assert_mode(graph_mode::COLORED_QUAD);
 
     float x = dst.x, y = dst.y, w = dst.width, h = dst.height;
 
@@ -362,7 +362,7 @@ void brush::draw_triagle(const vec2 &p1, const vec2 &p2, const vec2 &p3)
 {
     auto buf = lock_buffer();
 
-    assert_mode(ARC_COLORED_TRIANGLE);
+    assert_mode(graph_mode::COLORED_TRIANGLE);
 
     buf->vtx(float(p1.x)).vtx(float(p1.y));
     __w_half(buf, vertex_color[0]);
@@ -377,7 +377,7 @@ void brush::draw_line(const vec2 &p1, const vec2 &p2)
 {
     auto buf = lock_buffer();
 
-    assert_mode(ARC_COLORED_LINE);
+    assert_mode(graph_mode::COLORED_LINE);
 
     buf->vtx(float(p1.x)).vtx(float(p1.y));
     __w_half(buf, vertex_color[0]);
@@ -390,7 +390,7 @@ void brush::draw_point(const vec2 &p)
 {
     auto buf = lock_buffer();
 
-    assert_mode(ARC_COLORED_POINT);
+    assert_mode(graph_mode::COLORED_POINT);
 
     buf->vtx(float(p.x)).vtx(float(p.y));
     __w_half(buf, vertex_color[0]);
@@ -488,9 +488,9 @@ void brush::scissor_end()
 void brush::use(blend_mode mode)
 {
     flush();
-    if (mode == ARC_NORMAL_BLEND)
+    if (mode == blend_mode::NORMAL)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    else if (mode == ARC_ADDITIVE_BLEND)
+    else if (mode == blend_mode::ADDITIVE)
         glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
 }
 

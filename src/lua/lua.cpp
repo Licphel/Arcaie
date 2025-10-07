@@ -21,7 +21,7 @@ int __c_lua_load(lua_State *L)
     res_id module_id = res_id(luaL_checkstring(L, 1));
     hio_path path = module_id.find_path();
 
-    if (!hio_exists(path) || hio_judge(path) != ARC_FILE)
+    if (!hio_exists(path) || hio_judge(path) != hpath_type::FILE)
         return 0;
 
     std::string code = hio_read_str(path);

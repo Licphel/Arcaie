@@ -18,16 +18,16 @@ void shader_attrib::layout(shader_vertex_data_type size, int components, int str
     GLenum type;
     switch (size)
     {
-    case ARC_VDAT_BYTE:
+    case shader_vertex_data_type::BYTE:
         type = GL_UNSIGNED_BYTE;
         break;
-    case ARC_VDAT_INT:
+    case shader_vertex_data_type::INT:
         type = GL_UNSIGNED_SHORT;
         break;
-    case ARC_VDAT_HALF_FLOAT:
+    case shader_vertex_data_type::HALF_FLOAT:
         type = GL_HALF_FLOAT;
         break;
-    case ARC_VDAT_FLOAT:
+    case shader_vertex_data_type::FLOAT:
         type = GL_FLOAT;
         break;
     default:
@@ -200,17 +200,17 @@ shared<shader_program> make_program(builtin_shader_type type)
     if (__builtin_colored == nullptr || __builtin_textured == nullptr)
     {
         __builtin_colored = make_program(__dvert_colored, __dfrag_colored, [](shared<shader_program> program) {
-            program->get_attrib(0).layout(ARC_VDAT_FLOAT, 2, 16, 0);
-            program->get_attrib(1).layout(ARC_VDAT_HALF_FLOAT, 4, 16, 8);
+            program->get_attrib(0).layout(shader_vertex_data_type::FLOAT, 2, 16, 0);
+            program->get_attrib(1).layout(shader_vertex_data_type::HALF_FLOAT, 4, 16, 8);
 
             if (program->cached_uniforms.size() > 0)
                 return;
             program->cache_uniform("u_proj"); // 0
         });
         __builtin_textured = make_program(__dvert_textured, __dfrag_textured, [](shared<shader_program> program) {
-            program->get_attrib(0).layout(ARC_VDAT_FLOAT, 2, 24, 0);
-            program->get_attrib(1).layout(ARC_VDAT_HALF_FLOAT, 4, 24, 8);
-            program->get_attrib(2).layout(ARC_VDAT_FLOAT, 2, 24, 16);
+            program->get_attrib(0).layout(shader_vertex_data_type::FLOAT, 2, 24, 0);
+            program->get_attrib(1).layout(shader_vertex_data_type::HALF_FLOAT, 4, 24, 8);
+            program->get_attrib(2).layout(shader_vertex_data_type::FLOAT, 2, 24, 16);
 
             if (program->cached_uniforms.size() > 0)
                 return;
@@ -220,9 +220,9 @@ shared<shader_program> make_program(builtin_shader_type type)
     }
     switch (type)
     {
-    case ARC_BUILTIN_SHADER_COLORED:
+    case builtin_shader_type::COLORED:
         return __builtin_colored;
-    case ARC_BUILTIN_SHADER_TEXTURED:
+    case builtin_shader_type::TEXTURED:
         return __builtin_textured;
     }
     return nullptr;

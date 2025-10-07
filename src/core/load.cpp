@@ -20,7 +20,7 @@ void asset_loader::scan(const hio_path &path_root)
 {
     for (const hio_path &path : hio_recurse_files(path_root))
     {
-        if (hio_judge(path) == ARC_FILE)
+        if (hio_judge(path) == hpath_type::FILE)
         {
             res_id id = res_id(scope, path - root);
             std::string fmt = path.file_format();
@@ -97,27 +97,27 @@ void make_loader_equipment(shared<asset_loader> loader, asset_loader_equip equip
 {
     switch (equipment)
     {
-    case ARC_LOAD_PNG_AS_TEXTURE:
+    case asset_loader_equip::PNG_AS_TEXTURE:
         loader->process_strategy_map[".png"] = [](const hio_path &path, const res_id &id) {
             __resource_map[id] = std::any(make_texture(load_image(path)));
         };
         break;
-    case ARC_LOAD_PNG_AS_IMAGE:
+    case asset_loader_equip::PNG_AS_IMAGE:
         loader->process_strategy_map[".png"] = [](const hio_path &path, const res_id &id) {
             __resource_map[id] = std::any(load_image(path));
         };
         break;
-    case ARC_LOAD_TXT:
+    case asset_loader_equip::TXT:
         loader->process_strategy_map[".txt"] = [](const hio_path &path, const res_id &id) {
             __resource_map[id] = std::any(hio_read_str(path));
         };
         break;
-    case ARC_LOAD_WAVE:
+    case asset_loader_equip::WAVE:
         loader->process_strategy_map[".wav"] = [](const hio_path &path, const res_id &id) {
             __resource_map[id] = std::any(load_track(path));
         };
         break;
-    case ARC_LOAD_FONT:
+    case asset_loader_equip::FONT:
         // hard encoded warn: check later
         loader->process_strategy_map[".ttf"] = [](const hio_path &path, const res_id &id) {
             __resource_map[id] = std::any(load_font(path, 12, 12));
@@ -126,8 +126,8 @@ void make_loader_equipment(shared<asset_loader> loader, asset_loader_equip equip
             __resource_map[id] = std::any(load_font(path, 12, 12));
         };
         break;
-    case ARC_LOAD_SCRIPT:
-    case ARC_LOAD_SHADER:
+    case asset_loader_equip::SCRIPT:
+    case asset_loader_equip::SHADER:
         break;
     }
 }

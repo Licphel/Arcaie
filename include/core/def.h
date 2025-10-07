@@ -3,6 +3,7 @@
 
 #define LIB_NAME "arcaie"
 #define LIB_VERSION "v1.0.0"
+#define DEBUG_C true
 
 // I prefer the y-axis to point upwards, but modern graphics apis usually have
 // the y-axis pointing downwards. you can undefine this to make the y-axis point upwards.
@@ -17,8 +18,8 @@ typedef unsigned char byte;
 typedef char32_t u32_char;
 
 // smart pointers
-template <class T> using unique = std::unique_ptr<T>;
-template <class T> using shared = std::shared_ptr<T>;
-template <class T> using weak = std::weak_ptr<T>;
+template <typename T> using unique = std::unique_ptr<T>;
+template <typename T> using shared = std::shared_ptr<T>;
+template <typename T> using weak = std::weak_ptr<T>;
 
 } // namespace arcaie

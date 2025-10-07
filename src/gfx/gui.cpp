@@ -253,18 +253,19 @@ void gui_button::tick()
     if (enable_switching)
     {
         if (hovering && (ld || rd))
-            curstate = (curstate == PRESSED) ? (hovering ? HOVERING : IDLE) : PRESSED;
+            curstate = (curstate == button_state::PRESSED) ? (hovering ? button_state::HOVERING : button_state::IDLE)
+                                                           : button_state::PRESSED;
     }
     else
     {
-        curstate = IDLE;
+        curstate = button_state::IDLE;
         if (hovering)
         {
-            curstate = HOVERING;
+            curstate = button_state::HOVERING;
             if (ld)
-                curstate = PRESSED;
+                curstate = button_state::PRESSED;
             if (rd)
-                curstate = PRESSED;
+                curstate = button_state::PRESSED;
         }
     }
 }

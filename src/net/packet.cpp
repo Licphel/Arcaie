@@ -18,7 +18,7 @@ std::vector<byte> packet::pack(shared<packet> p)
     uncmped_buf.write<int>(pid);
     p->write(uncmped_buf);
 
-    auto cmped_buf = hio_compress(uncmped_buf.to_vector(), ARC_COMP_OPTIMAL);
+    auto cmped_buf = hio_compress(uncmped_buf.to_vector(), compression_level::OPTIMAL);
     uncmped_buf.set_write_pos(0);
     uncmped_buf.write<int>(cmped_buf.size());
     uncmped_buf.write_bytes(cmped_buf.data(), cmped_buf.size());

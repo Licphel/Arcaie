@@ -8,26 +8,27 @@
 #include <core/math.h>
 #include <stack>
 #include <functional>
+#include <core/embit.h>
 
 namespace arcaie::gfx
 {
 
-enum brush_flag
+enum class brush_flag : long
 {
-    ARC_BFLAG_NO = 1LL << 0,
-    ARC_BFLAG_FLIP_X = 1LL << 1,
-    ARC_BFLAG_FLIP_Y = 1LL << 2
+    NO = 1L << 0,
+    FLIP_X = 1L << 1,
+    FLIP_Y = 1L << 2
 };
 
-enum blend_mode
+enum class blend_mode
 {
-    ARC_NORMAL_BLEND,
-    ARC_ADDITIVE_BLEND
+    NORMAL,
+    ADDITIVE
 };
 
 struct graph_state
 {
-    graph_mode mode = ARC_TEXTURED_QUAD;
+    graph_mode mode = graph_mode::TEXTURED_QUAD;
     shared<texture> texture = nullptr;
     shared<shader_program> program = nullptr;
     std::function<void(shared<shader_program> program)> callback_uniform;
@@ -77,8 +78,8 @@ struct brush
     void use(shared<shader_program> program);
     void use(const graph_state &sts);
 
-    void draw_texture(shared<texture> tex, const quad &dst, const quad &src, brush_flag flag = ARC_BFLAG_NO);
-    void draw_texture(shared<texture> tex, const quad &dst, brush_flag flag = ARC_BFLAG_NO);
+    void draw_texture(shared<texture> tex, const quad &dst, const quad &src, bitmask<brush_flag> flag = brush_flag::NO);
+    void draw_texture(shared<texture> tex, const quad &dst, bitmask<brush_flag> flag = brush_flag::NO);
     void draw_rect(const quad &dst);
     void draw_rect_outline(const quad &dst);
     void draw_triagle(const vec2 &p1, const vec2 &p2, const vec2 &p3);
