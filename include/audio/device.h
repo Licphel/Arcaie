@@ -1,7 +1,7 @@
 #pragma once
 #include <core/def.h>
-#include <core/math.h>
 #include <core/io.h>
+#include <core/math.h>
 
 namespace arcaie::audio
 {

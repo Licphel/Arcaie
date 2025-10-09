@@ -1,71 +1,81 @@
 cmake_minimum_required(VERSION 3.28)
 project(arcaie VERSION 1.0.0 LANGUAGES CXX)
 
+# use ccache
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
   set(CMAKE_C_COMPILER_LAUNCHER   "${CCACHE_PROGRAM}")
   set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
 endif()
 
+# module settings
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-# remove boms and correct encoding to make modules compiled properly
 set(CMAKE_CXX_SOURCE_FILE_ENCODING UTF-8 NO-BOM)
-# enable module features
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 set(CMAKE_EXPERIMENTAL_CXX_MODULE_CMAKE_API "2182bf5c-ef0d-489a-91da-49dacfd01daf")
 set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 1)
-# tell vscode where the modules are
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-
+# naming differences
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(EXECUTABLE_NAME "arcaie-debug")
     add_compile_options(-g -O0)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(EXECUTABLE_NAME "arcaie-release") 
+    add_compile_options(-O2 -DNDEBUG)
 else()
+    set(EXECUTABLE_NAME "arcaie")
     add_compile_options(-O2)
 endif()
+
+# set output
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 
-# cpp-only srcs
-file(GLOB_RECURSE SOURCES ${SRC_DIR}/*.cpp)
+file(GLOB_RECURSE SOURCES 
+    ${SRC_DIR}/*.cpp
+    ${SRC_DIR}/**/*.cpp
+)
 
-# search for modules and module impls
 file(GLOB_RECURSE MODULE_IFACES CONFIGURE_DEPENDS
      "${CMAKE_SOURCE_DIR}/module/*.cppm")
 
 file(GLOB_RECURSE MODULE_IMPLS  CONFIGURE_DEPENDS
      "${CMAKE_SOURCE_DIR}/module/*.cpp")
 
-# add executable
-add_executable(arcaie ${SOURCES})
+add_executable(${EXECUTABLE_NAME} ${SOURCES})
 
-# add modules and module impls
-target_sources(arcaie
+# includes & modules
+target_sources(${EXECUTABLE_NAME}
     PUBLIC FILE_SET CXX_MODULES FILES ${MODULE_IFACES}
     PRIVATE ${MODULE_IMPLS} src/main.cpp)
 
-# compatibility for includes
-target_include_directories(arcaie PRIVATE ${INCLUDE_DIR})
+target_include_directories(${EXECUTABLE_NAME} PRIVATE ${INCLUDE_DIR})
 
 set(MSYS2_ROOT "C:/msys64/mingw64")
 
-# link msys2 packages
-target_include_directories(arcaie PRIVATE
+target_include_directories(${EXECUTABLE_NAME} PRIVATE
     ${MSYS2_ROOT}/include
     ${MSYS2_ROOT}/include/freetype2
 )
 
-target_link_directories(arcaie PRIVATE
+# precompile
+# target_precompile_headers(${EXECUTABLE_NAME} PRIVATE
+#    "${INCLUDE_DIR}/pch.hpp"
+#)
+
+# include & linkages
+
+target_link_directories(${EXECUTABLE_NAME} PRIVATE
     ${MSYS2_ROOT}/lib
     ${CMAKE_SOURCE_DIR}/lib
 )
 
-# dynamic libs.
-target_link_libraries(arcaie PRIVATE
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE
     openal
     freetype
     fmt
@@ -83,13 +93,39 @@ target_link_libraries(arcaie PRIVATE
     wsock32
 )
 
-# win32 special flags
+# platform args
 if(WIN32)
-    target_link_options(arcaie PRIVATE
-        # set application type to windows
-        -mwindows
-        -Wl,--disable-dynamicbase
-        -Wl,--image-base,0x140000000
-        -Wl,-rpath,dlls
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_link_options(${EXECUTABLE_NAME} PRIVATE
+            -mconsole
+            -Wl,--disable-dynamicbase
+            -Wl,--image-base,0x140000000
+            -Wl,-rpath,dlls
+        )
+    else()
+        target_link_options(${EXECUTABLE_NAME} PRIVATE
+            -mwindows
+            -Wl,--disable-dynamicbase
+            -Wl,--image-base,0x140000000
+            -Wl,-rpath,dlls
+        )
+    endif()
+elseif(UNIX AND NOT APPLE)
+    target_link_libraries(${EXECUTABLE_NAME} PRIVATE
+        dl
+        pthread
     )
+    
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_link_options(${EXECUTABLE_NAME} PRIVATE
+            -s
+        )
+    endif()
 endif()
+
+# copy one to bin/ for running
+add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/bin
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${EXECUTABLE_NAME}> ${CMAKE_SOURCE_DIR}/bin/$<TARGET_FILE_NAME:${EXECUTABLE_NAME}>
+    COMMENT "Copying ${EXECUTABLE_NAME} to bin directory"
+)

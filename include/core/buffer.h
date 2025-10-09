@@ -1,11 +1,11 @@
 #pragma once
-#include <vector>
-#include <cstring>
-#include <string>
-#include <type_traits>
 #include <core/def.h>
 #include <core/log.h>
 #include <core/uuid.h>
+#include <cstring>
+#include <string>
+#include <type_traits>
+#include <vector>
 
 namespace arcaie
 {
@@ -50,6 +50,7 @@ struct byte_buf
     byte_buf();
     byte_buf(size_t initial_size);
     byte_buf(const std::vector<byte> &vec);
+    byte_buf(const byte_buf &cpy);
 
     size_t size() const;
     size_t capacity() const;

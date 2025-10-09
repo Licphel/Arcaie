@@ -1,14 +1,13 @@
 #pragma once
+#include <core/embit.h>
+#include <core/math.h>
 #include <cstring>
+#include <functional>
 #include <gfx/camera.h>
+#include <gfx/cbuf.h>
 #include <gfx/color.h>
 #include <gfx/device.h>
-#include <gfx/cbuf.h>
-#include <core/math.h>
-#include <core/math.h>
 #include <stack>
-#include <functional>
-#include <core/embit.h>
 
 namespace arcaie::gfx
 {
@@ -30,8 +29,8 @@ struct graph_state
 {
     graph_mode mode = graph_mode::TEXTURED_QUAD;
     shared<texture> texture = nullptr;
-    shared<shader_program> program = nullptr;
-    std::function<void(shared<shader_program> program)> callback_uniform;
+    shared<program> prog = nullptr;
+    std::function<void(shared<program> program)> callback_uniform;
     std::function<void(unique<complex_buffer> buf)> callback_buffer_append;
 };
 
@@ -44,8 +43,8 @@ struct brush
     std::stack<transform> P_tstack;
     camera P_camera;
     graph_state P_state;
-    shared<shader_program> P_default_colored;
-    shared<shader_program> P_default_textured;
+    shared<program> P_default_colored;
+    shared<program> P_default_textured;
     weak<complex_buffer> wbuf;
     mesh *P_mesh_root;
     bool P_is_in_mesh = false;
@@ -74,9 +73,9 @@ struct brush
     void flush();
     void assert_mode(graph_mode mode);
     void assert_texture(shared<texture> tex);
-    void use(const camera &cam);
-    void use(shared<shader_program> program);
-    void use(const graph_state &sts);
+    void use_camera(const camera &cam);
+    void use_program(shared<program> program);
+    void use_state(const graph_state &sts);
 
     void draw_texture(shared<texture> tex, const quad &dst, const quad &src, bitmask<brush_flag> flag = brush_flag::NO);
     void draw_texture(shared<texture> tex, const quad &dst, bitmask<brush_flag> flag = brush_flag::NO);
@@ -92,7 +91,7 @@ struct brush
     void viewport(const quad &quad);
     void scissor(const quad &quad);
     void scissor_end();
-    void use(blend_mode mode);
+    void use_blend(blend_mode mode);
 };
 
 unique<brush> make_brush(shared<complex_buffer> buf);

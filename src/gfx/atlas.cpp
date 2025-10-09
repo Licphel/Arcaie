@@ -1,8 +1,8 @@
-#include <gfx/atlas.h>
-#include <core/log.h>
 #include <algorithm>
-#include <vector>
+#include <core/log.h>
 #include <core/math.h>
+#include <gfx/atlas.h>
+#include <vector>
 
 // clang-format off
 #include <gl/glew.h>
@@ -37,8 +37,8 @@ void atlas::begin()
     output_texture = make_texture(nullptr);
 
     // pre-set
-    output_texture->fwidth = output_image->width = width;
-    output_texture->fheight = output_image->height = height;
+    output_texture->full_width = output_image->width = width;
+    output_texture->full_height = output_image->height = height;
 
     memset(pixels, 0, width * height * 4);
 }

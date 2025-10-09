@@ -1,6 +1,6 @@
 #pragma once
-#include <core/io.h>
 #include <core/def.h>
+#include <core/io.h>
 #include <core/math.h>
 
 namespace arcaie::gfx
@@ -25,8 +25,8 @@ struct texture
     int v = 0;
     int width = 0;
     int height = 0;
-    int fwidth = 0;
-    int fheight = 0;
+    int full_width = 0;
+    int full_height = 0;
     /* maybe nullptr */ shared<image> P_relying_image = nullptr;
     /* unstable */ unsigned int P_texture_id = 0;
     /* unstable */ bool P_is_framebuffer;

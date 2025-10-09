@@ -43,7 +43,7 @@ void mesh::draw(brush *gbrush)
     auto old_buf = gbrush->wbuf;
     auto old_msh = gbrush->P_mesh_root;
 
-    gbrush->use(state);
+    gbrush->use_state(state);
     gbrush->wbuf = buffer;
     gbrush->P_mesh_root = this;
     gbrush->P_clear_when_flush = false;
@@ -53,7 +53,7 @@ void mesh::draw(brush *gbrush)
     gbrush->P_clear_when_flush = true;
     gbrush->P_mesh_root = old_msh;
     gbrush->wbuf = old_buf;
-    gbrush->use(old_state);
+    gbrush->use_state(old_state);
 }
 
 shared<mesh> make_mesh()

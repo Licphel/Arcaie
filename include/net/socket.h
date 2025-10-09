@@ -43,6 +43,10 @@ struct socket : packet_context
     unique<P_impl> P_pimpl;
 };
 
+// get an assigned tcp port
+uint16_t get_available_tcp_port();
+// get an assigned tcp port
+uint16_t get_available_udp_port();
 socket &get_gsocket_server();
 socket &get_gsocket_remote();
 

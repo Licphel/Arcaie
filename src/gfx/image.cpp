@@ -1,6 +1,6 @@
-#include <gfx/image.h>
 #include <core/log.h>
 #include <gfx/brush.h>
+#include <gfx/image.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -31,9 +31,9 @@ image::~image()
 shared<image> load_image(const path_handle &path)
 {
     shared<image> img = std::make_shared<image>();
-    img->pixels = stbi_load(path.absolute.c_str(), &img->width, &img->height, nullptr, 4);
+    img->pixels = stbi_load(path.abs_path.c_str(), &img->width, &img->height, nullptr, 4);
     if (img->pixels == nullptr)
-        arcthrow(ARC_FATAL, "path not found: {}", path.absolute);
+        arcthrow(ARC_FATAL, "path not found: {}", path.abs_path);
     img->P_is_from_stb = true;
     return img;
 }
@@ -99,8 +99,8 @@ void set_texture_parameters(shared<texture> tex, texture_parameters param)
 void lazylink_texture_data(shared<texture> tex, shared<image> img)
 {
     tex->P_relying_image = img;
-    tex->fwidth = tex->width = img->width;
-    tex->fheight = tex->height = img->height;
+    tex->full_width = tex->width = img->width;
+    tex->full_height = tex->height = img->height;
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex->P_texture_id);
@@ -116,8 +116,8 @@ shared<texture> cut_texture(shared<texture> tex, const quad &src)
     shared<texture> ntex = std::make_shared<texture>();
     ntex->width = src.width;
     ntex->height = src.height;
-    ntex->fwidth = tex->fwidth;
-    ntex->fheight = tex->fheight;
+    ntex->full_width = tex->full_width;
+    ntex->full_height = tex->full_height;
     ntex->u = src.x;
     ntex->v = src.y;
     ntex->root = tex;

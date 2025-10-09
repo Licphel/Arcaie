@@ -18,9 +18,9 @@ enum log_type
     ARC_FATAL = 3
 };
 
-inline static std::mutex P_log_mutex;
+static std::mutex P_log_mutex;
 
-void log_redirect();
+void log_redirect(const std::string& logv);
 std::string P_get_header(log_type type);
 
 template <typename... Args> void arclog(log_type type, const std::string &fmt, Args &&...args)
@@ -29,6 +29,7 @@ template <typename... Args> void arclog(log_type type, const std::string &fmt, A
     std::string formatted = P_get_header(type) + fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
     std::cout << formatted << std::endl;
     std::cout << std::flush;
+    log_redirect(formatted);
 }
 
 template <typename... Args> [[noreturn]] void arcthrow(log_type type, const std::string &fmt, Args &&...args)
@@ -37,6 +38,7 @@ template <typename... Args> [[noreturn]] void arcthrow(log_type type, const std:
     std::string formatted = P_get_header(type) + fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
     std::cout << formatted << std::endl;
     std::cout << std::flush;
+    log_redirect(formatted);
     throw std::runtime_error(formatted);
 }
 

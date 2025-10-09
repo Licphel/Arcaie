@@ -21,6 +21,10 @@ byte_buf::byte_buf(const std::vector<byte> &vec)
     P_wpos = vec.size();
 }
 
+byte_buf::byte_buf(const byte_buf &cpy) : byte_buf(cpy.to_vector())
+{
+}
+
 size_t byte_buf::size() const
 {
     return P_wpos;

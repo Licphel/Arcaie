@@ -22,22 +22,24 @@ void camera::apply()
     translation_t.rotate(rotation);
     translation_t.scale(scale.x, scale.y);
     combined_t.load(projection_t);
-    combined_t.multiply(translation_t);
-    inverted_t = combined_t.get_invert();
+    combined_t.mul(translation_t);
+    inverted_t.load(combined_t);
+    inverted_t.invert();
 
     translation_t.identity();
     translation_t.translate(-center.x, center.y);
     translation_t.rotate(rotation);
     translation_t.scale(scale.x, -scale.y);
     combined_out_t.load(projection_t);
-    combined_out_t.multiply(translation_t);
+    combined_out_t.mul(translation_t);
 #else
     translation_t.translate(-center.x, -center.y);
     translation_t.rotate(rotation);
     translation_t.scale(scale.x, scale.y);
     combined_t.load(projection_t);
     combined_t.multiply(translation_t);
-    inverted_t = combined_t.get_invert();
+    inverted_t.load(combined_t);
+    inverted_t.invert();
     combined_out_t.load(combined_t);
 #endif
 }

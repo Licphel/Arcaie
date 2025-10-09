@@ -16,7 +16,15 @@ struct color
     // this operation is used so frequently so that we inline it.
     inline color() = default;
     // this operation is used so frequently so that we inline it.
-    inline color(double x, double y, double z, double w = 1.0)
+    inline color(double x, double y, double z)
+    {
+        r = x;
+        g = y;
+        b = z;
+        a = 1.0;
+    }
+    // this operation is used so frequently so that we inline it.
+    inline color(double x, double y, double z, double w)
     {
         r = x;
         g = y;

@@ -4,23 +4,23 @@
 #include <iostream>
 
 #define BROTLI_IMPLEMENTATION
-#include <brotli/encode.h>
 #include <brotli/decode.h>
+#include <brotli/encode.h>
 
 namespace arcaie
 {
 
 path_handle::path_handle() = default;
 
-path_handle::path_handle(const std::string &name) : absolute(name), P_npath(fs::path(name))
+path_handle::path_handle(const std::string &name) : abs_path(name), P_npath(fs::path(name))
 {
     P_check();
 }
 
 void path_handle::P_check()
 {
-    for (size_t pos = 0; (pos = absolute.find('\\', pos)) != std::string::npos;)
-        absolute.replace(pos, 1, "/");
+    for (size_t pos = 0; (pos = abs_path.find('\\', pos)) != std::string::npos;)
+        abs_path.replace(pos, 1, "/");
 }
 
 std::string path_handle::file_name() const
@@ -35,8 +35,8 @@ std::string path_handle::file_format() const
 
 path_handle path_handle::operator/(const std::string &name) const
 {
-    bool append = absolute[absolute.length() - 1] != '/';
-    return path_handle(append ? absolute + '/' + name : absolute + name);
+    bool append = abs_path[abs_path.length() - 1] != '/';
+    return path_handle(append ? abs_path + '/' + name : abs_path + name);
 }
 
 std::string path_handle::operator-(const path_handle &path) const
@@ -178,13 +178,13 @@ std::vector<byte> io_read_bytes(const path_handle &path, io_compression_level cl
 {
     std::ifstream file(path.P_npath, std::ios::binary | std::ios::ate);
     if (!file)
-        arcthrow(ARC_FATAL, "cannot find {}", path.absolute);
+        arcthrow(ARC_FATAL, "cannot find {}", path.abs_path);
     size_t len = file.tellg();
     file.seekg(0, std::ios::beg);
     std::vector<byte> raw(len);
     file.read(reinterpret_cast<char *>(raw.data()), len);
     if (!file)
-        arcthrow(ARC_FATAL, "short read in {}", path.absolute);
+        arcthrow(ARC_FATAL, "short read in {}", path.abs_path);
 
     if (clvl == io_compression_level::RAW_READ)
         return raw;
@@ -199,7 +199,7 @@ void io_write_bytes(const path_handle &path, const std::vector<byte> &data, io_c
     auto out = io_compress(data, clvl);
     std::ofstream file(path.P_npath, std::ios::binary);
     if (!file)
-        arcthrow(ARC_FATAL, "cannot open {} for write", path.absolute);
+        arcthrow(ARC_FATAL, "cannot open {} for write", path.abs_path);
     file.write(reinterpret_cast<const char *>(out.data()), out.size());
 }
 

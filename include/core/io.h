@@ -1,7 +1,7 @@
 #pragma once
+#include <core/def.h>
 #include <filesystem>
 #include <vector>
-#include <core/def.h>
 
 namespace fs = std::filesystem;
 
@@ -10,7 +10,7 @@ namespace arcaie
 
 struct path_handle
 {
-    std::string absolute;
+    std::string abs_path;
     /* unstable */ fs::path P_npath;
 
     path_handle();

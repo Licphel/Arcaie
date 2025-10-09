@@ -1,22 +1,22 @@
-#include <gfx/brush.h>
-#include <gfx/image.h>
-#include <gfx/device.h>
-#include <core/log.h>
 #include <audio/device.h>
-#include <gfx/atlas.h>
-#include <gfx/mesh.h>
-#include <gfx/font.h>
 #include <core/bin.h>
-#include <core/buffer.h>
 #include <core/bio.h>
+#include <core/buffer.h>
+#include <core/input.h>
 #include <core/load.h>
+#include <core/log.h>
 #include <core/rand.h>
 #include <core/uuid.h>
+#include <gfx/atlas.h>
+#include <gfx/brush.h>
+#include <gfx/device.h>
+#include <gfx/font.h>
+#include <gfx/gui.h>
+#include <gfx/image.h>
+#include <gfx/mesh.h>
+#include <lua/lua.h>
 #include <net/packet.h>
 #include <net/socket.h>
-#include <gfx/gui.h>
-#include <lua/lua.h>
-#include <core/input.h>
 #include <world/level.h>
 
 using namespace arcaie;
@@ -61,31 +61,17 @@ int main()
     tk_end_make_handle();
 
     elvl = new level();
-    entity_ref eref1 = elvl->make_entity();
-    entity_ref eref2 = elvl->make_entity();
-    entity_ref eref3 = elvl->make_entity();
-    elvl->add_system(ecs_phase::COMMON, [](level &lvl) {
-        elvl->each<posic>("position",
-                          [lvl](const entity_ref &ref, posic &cmp) { arclog(ARC_INFO, std::to_string(cmp.x)); });
-    });
-    elvl->add_component("position", eref1, posic{1.5, 3.5});
-    elvl->add_component("position", eref2, posic{2.5, 3.5});
-    elvl->add_component("position", eref3, posic{3.5, 3.5});
 
-    auto *pool = elvl->get_pool<posic>("position");
-    auto *cmp = pool->get(eref2);
-
-    log_redirect();
+    fnt = load_font(io_open_local("gfx/font/main.ttf"), 32, 12);
+    auto tex = make_texture(load_image(io_open_local("gfx/misc/test.png")));
+    pct = nine_patches(tex);
+    P_get_resource_map()["arcaie:gfx/misc/test.png"] = tex;
 
     lua_make_state();
     lua_bind_modules();
     lua_eval(io_read_str(io_open_local("main.lua")));
     register_packet<packet_2s_heartbeat>();
     register_packet<packet_dummy>();
-
-    fnt = load_font(io_open_local("gfx/font/main.ttf"), 32, 12);
-    auto tex = make_texture(load_image(io_open_local("gfx/misc/test.png")));
-    pct = nine_patches(tex);
 
     g = make_gui<gui>();
 
@@ -103,7 +89,7 @@ int main()
         pct.make_vtx(brush, b->region);
         brush->cl_norm();
     };
-    b->on_click = []() { arclog(ARC_INFO, "clicked!"); };
+    b->on_click = []() { arclog(ARC_INFO, "I am clicked!"); };
     g->join(b);
 
     tv = make_gui_component<gui_text_view>();
@@ -116,21 +102,25 @@ int main()
 
     g->display();
 
-    socks.start(8080);
-    sockc.connect(connection_type::lan_server, "127.0.0.1", 8080);
+    uint16_t port = get_available_tcp_port();
+    socks.start(port);
+    sockc.connect(connection_type::lan_server);
 
-    tk_hook_event_tick([]() { elvl->tick_systems(); });
+    tk_hook_event_tick([]() {
+        elvl->tick_systems();
+        lua_protected_call(lua_get<lua_function>("tick"), elvl);
+    });
 
     tk_hook_event_render([](brush *brush) {
         brush->clear({0, 0, 0, 1});
-        brush->use(get_absolute_camera());
-        brush->use(blend_mode::NORMAL);
+        brush->use_camera(get_absolute_camera());
+        brush->use_blend(blend_mode::NORMAL);
         gui::tick_currents();
         gui::render_currents(brush);
 
-        brush->use(get_gui_camera());
+        brush->use_camera(get_gui_camera());
         fnt->make_vtx(brush, "DEBUG FPS: " + std::to_string(tk_real_fps()), 15, 15);
-        lua_get<lua_function>("draw")(brush);
+        lua_protected_call(lua_get<lua_function>("draw"), brush);
     });
 
     tk_make_device();

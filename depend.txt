@@ -9,3 +9,4 @@ pacman -S mingw-w64-x86_64-glfw
 pacman -S mingw-w64-x86_64-freetype
 pacman -S mingw-w64-x86_64-brotli
 pacman -S mingw-w64-x86_64-lua
+# luajit just cannot work on my machine.

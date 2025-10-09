@@ -1,14 +1,16 @@
-#include <net/socket.h>
 #include <boost/asio.hpp>
+#include <core/time.h>
 #include <deque>
+#include <fmt/format.h>
+#include <gfx/device.h>
+#include <memory>
 #include <mutex>
+#include <net/socket.h>
+#include <queue>
 #include <thread>
 #include <unordered_map>
-#include <memory>
-#include <fmt/format.h>
-#include <queue>
-#include <gfx/device.h>
-#include <core/time.h>
+
+#define P_UDP_BC_PORT 15000
 
 namespace arcaie::net
 {
@@ -73,7 +75,7 @@ struct socket::P_impl
     tcp::acceptor acceptor{ioc};
     udp::socket broadcaster{ioc};
     std::thread broadcast_thread;
-    uint16_t broadcast_port = 15000;
+    uint16_t broadcast_port = P_UDP_BC_PORT;
 
     struct channel
     {
@@ -224,7 +226,7 @@ struct socket::P_impl
 
     void start_broadcast(uint16_t game_port)
     {
-        broadcast_port = 15000;
+        broadcast_port = P_UDP_BC_PORT;
         broadcaster.open(udp::v4());
         broadcaster.set_option(udp::socket::broadcast(true));
         broadcast_thread = std::thread([this, game_port]() {
@@ -391,7 +393,7 @@ void socket::discover()
 {
     udp::socket udp_sock(P_pimpl->ioc);
     udp_sock.open(udp::v4());
-    udp_sock.bind(udp::endpoint(asio::ip::address_v4::any(), 15000));
+    udp_sock.bind(udp::endpoint(asio::ip::address_v4::any(), P_UDP_BC_PORT));
 
     std::string addrs;
     uint16_t ports = 0;
@@ -431,7 +433,7 @@ void socket::discover()
 void socket::connect(connection_type type, const std::string &host, uint16_t port)
 {
     if (type == connection_type::integrated_server)
-        P_pimpl->remote_connect("127.0.0.1", port ? port : 8080);
+        P_pimpl->remote_connect("127.0.0.1", get_available_tcp_port());
     else if (type == connection_type::lan_server)
         discover();
     else if (type == connection_type::address_server)
@@ -489,6 +491,40 @@ socket &get_gsocket_server()
 socket &get_gsocket_remote()
 {
     return P_gsocket_c;
+}
+
+uint16_t get_available_tcp_port()
+{
+    asio::io_context ioc;
+    tcp::socket s(ioc);
+
+    try
+    {
+        s.open(tcp::v4());
+        s.bind(tcp::endpoint(tcp::v4(), 0));
+    }
+    catch(const std::exception& e)
+    {
+        arcthrow(ARC_FATAL, e.what());
+    }
+    return s.local_endpoint().port();
+}
+
+uint16_t get_available_udp_port()
+{
+    asio::io_context ioc;
+    udp::socket s(ioc);
+
+    try
+    {
+        s.open(udp::v4());
+        s.bind(udp::endpoint(udp::v4(), 0));
+    }
+    catch(const std::exception& e)
+    {
+        arcthrow(ARC_FATAL, e.what());
+    }
+    return s.local_endpoint().port();
 }
 
 } // namespace arcaie::net

@@ -71,7 +71,7 @@ void gui::render(brush *brush)
     auto &cam = get_gui_camera();
     // do not refer to the old camera - it will change soon.
     auto old_cam = brush->P_camera;
-    brush->use(cam);
+    brush->use_camera(cam);
     vec2 cursor_projected = get_cursor();
     // transform cursor to world coordinates
     cam.unproject(cursor_projected);
@@ -82,7 +82,7 @@ void gui::render(brush *brush)
         c->render(brush);
     }
 
-    brush->use(old_cam);
+    brush->use_camera(old_cam);
 }
 
 void gui::tick()

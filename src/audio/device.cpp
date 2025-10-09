@@ -1,10 +1,10 @@
-#include <audio/device.h>
-#include <al/alc.h>
 #include <al/al.h>
-#include <gfx/device.h>
-#include <vector>
+#include <al/alc.h>
+#include <audio/device.h>
 #include <core/log.h>
+#include <gfx/device.h>
 #include <memory>
+#include <vector>
 
 using namespace arcaie::gfx;
 
@@ -115,15 +115,15 @@ shared<track> load_track(const path_handle &path)
     size_t index = 0;
 
     if (file.size() < 12)
-        arcthrow(ARC_FATAL, "too small file: {}", path.absolute);
+        arcthrow(ARC_FATAL, "too small file: {}", path.abs_path);
 
     if (file[index++] != 'R' || file[index++] != 'I' || file[index++] != 'F' || file[index++] != 'F')
-        arcthrow(ARC_FATAL, "not a wave file: {}", path.absolute);
+        arcthrow(ARC_FATAL, "not a wave file: {}", path.abs_path);
 
     index += 4;
 
     if (file[index++] != 'W' || file[index++] != 'A' || file[index++] != 'V' || file[index++] != 'E')
-        arcthrow(ARC_FATAL, "not a wave file: {}", path.absolute);
+        arcthrow(ARC_FATAL, "not a wave file: {}", path.abs_path);
 
     int samp_rate = 0;
     int16_t bps = 0;
@@ -146,17 +146,17 @@ shared<track> load_track(const path_handle &path)
         index += 4;
 
         if (index + chunk_size > file.size())
-            arcthrow(ARC_FATAL, "invalid chunk size: {}", path.absolute);
+            arcthrow(ARC_FATAL, "invalid chunk size: {}", path.abs_path);
 
         if (identifier == "fmt ")
         {
             if (chunk_size != 16)
-                arcthrow(ARC_FATAL, "unknown format: {}", path.absolute);
+                arcthrow(ARC_FATAL, "unknown format: {}", path.abs_path);
 
             int16_t audio_format = *reinterpret_cast<const int16_t *>(&file[index]);
             index += 2;
             if (audio_format != 1)
-                arcthrow(ARC_FATAL, "unknown format: {}", path.absolute);
+                arcthrow(ARC_FATAL, "unknown format: {}", path.abs_path);
 
             n_ch = *reinterpret_cast<const int16_t *>(&file[index]);
             index += 2;
@@ -201,7 +201,7 @@ shared<track> load_track(const path_handle &path)
             index += chunk_size;
     }
 
-    auto ptr = std::make_shared<track>();
+    shared<track> ptr = std::make_shared<track>();
     ptr->P_track_id = buffer;
     ptr->sec_len = (double)byte_size / (samp_rate * bps / 8.0) / n_ch;
 
@@ -217,7 +217,7 @@ shared<clip> make_clip(shared<track> track)
     alSourcef(id, AL_REFERENCE_DISTANCE, ref_dist);
     alSourcef(id, AL_MAX_DISTANCE, max_dist);
 
-    auto ptr = std::make_shared<clip>();
+    shared<clip> ptr = std::make_shared<clip>();
     ptr->relying_track = track;
     ptr->P_clip_id = id;
     clip_r.push_back(ptr);

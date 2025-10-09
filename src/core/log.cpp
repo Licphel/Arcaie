@@ -8,10 +8,10 @@ namespace arcaie
 
 static std::ofstream P_logstream = std::ofstream(io_open_local("latest.log").P_npath);
 
-void log_redirect()
+void log_redirect(const std::string& logv)
 {
-    std::cout.rdbuf(P_logstream.rdbuf());
-    std::cerr.rdbuf(P_logstream.rdbuf());
+    P_logstream << logv << std::endl;
+    P_logstream << std::flush;
 }
 
 std::string P_get_header(log_type type)

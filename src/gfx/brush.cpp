@@ -1,8 +1,8 @@
+#include <core/log.h>
 #include <gfx/brush.h>
 #include <gfx/device.h>
-#include <memory>
-#include <core/log.h>
 #include <gfx/mesh.h>
+#include <memory>
 
 // clang-format off
 #include <gl/glew.h>
@@ -127,26 +127,26 @@ void brush::ts_rot(const vec2 &v, double r)
     trs.translate(-v.x, -v.y);
 }
 
-void brush::use(const camera &cam)
+void brush::use_camera(const camera &cam)
 {
     flush();
     P_camera = cam;
     viewport(cam.viewport);
 }
 
-void brush::use(shared<shader_program> program)
+void brush::use_program(shared<program> program)
 {
-    if (P_state.program != program)
+    if (P_state.prog != program)
     {
         flush();
-        P_state.program = program;
+        P_state.prog = program;
     }
 }
 
-void brush::use(const graph_state &sts)
+void brush::use_state(const graph_state &sts)
 {
     flush();
-    use(P_state.program);
+    use_program(P_state.prog);
     assert_texture(P_state.texture);
     assert_mode(P_state.mode);
     P_state = sts;
@@ -155,7 +155,7 @@ void brush::use(const graph_state &sts)
 transform brush::get_combined_transform()
 {
     transform cpy = P_camera.combined_out_t;
-    return cpy.multiply(P_tstack.top());
+    return cpy.mul(P_tstack.top());
 }
 
 void brush::flush()
@@ -170,9 +170,9 @@ void brush::flush()
     if (P_is_in_mesh)
         arcthrow(ARC_FATAL, "it seems that somewhere the brush is flushed in a mesh. the state cannot be consistent!");
 
-    shared<shader_program> program_used;
-    if (P_state.program != nullptr && P_state.program->P_program_id != 0)
-        program_used = P_state.program;
+    shared<program> program_used;
+    if (P_state.prog != nullptr && P_state.prog->P_program_id != 0)
+        program_used = P_state.prog;
     else
         switch (P_state.mode)
         {
@@ -283,10 +283,10 @@ void brush::draw_texture(shared<texture> tex, const quad &dst, const quad &src, 
     assert_mode(graph_mode::TEXTURED_QUAD);
     assert_texture(tex);
 
-    float u = (src.x + tex->u) / tex->fwidth;
-    float v = (src.y + tex->v) / tex->fheight;
-    float u2 = (src.prom_x() + tex->u) / tex->fwidth;
-    float v2 = (src.prom_y() + tex->v) / tex->fheight;
+    float u = (src.x + tex->u) / tex->full_width;
+    float v = (src.y + tex->v) / tex->full_height;
+    float u2 = (src.prom_x() + tex->u) / tex->full_width;
+    float v2 = (src.prom_y() + tex->v) / tex->full_height;
 
     if (flag.test(brush_flag::FLIP_X))
         std::swap(u, u2);
@@ -487,7 +487,7 @@ void brush::scissor_end()
     glDisable(GL_SCISSOR_TEST);
 }
 
-void brush::use(blend_mode mode)
+void brush::use_blend(blend_mode mode)
 {
     flush();
     if (mode == blend_mode::NORMAL)

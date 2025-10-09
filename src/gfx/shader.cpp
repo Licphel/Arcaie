@@ -1,8 +1,8 @@
-#include <gfx/shader.h>
 #include <core/def.h>
-#include <memory>
 #include <core/log.h>
 #include <functional>
+#include <gfx/shader.h>
+#include <memory>
 
 // clang-format off
 #include <gl/glew.h>
@@ -82,27 +82,27 @@ void shader_uniform::set(const transform &v)
     glUniformMatrix4fv(P_uniform_id, 1, GL_FALSE, m);
 }
 
-shader_program::~shader_program()
+program::~program()
 {
     glDeleteProgram(P_program_id);
 }
 
-shader_attrib shader_program::get_attrib(const std::string &name)
+shader_attrib program::get_attrib(const std::string &name)
 {
     return shader_attrib((unsigned int)glGetAttribLocation(P_program_id, name.c_str()));
 }
 
-shader_attrib shader_program::get_attrib(int index)
+shader_attrib program::get_attrib(int index)
 {
     return shader_attrib((unsigned int)index);
 }
 
-shader_uniform shader_program::get_uniform(const std::string &name)
+shader_uniform program::get_uniform(const std::string &name)
 {
     return shader_uniform((unsigned int)glGetUniformLocation(P_program_id, name.c_str()));
 }
 
-shader_uniform shader_program::cache_uniform(const std::string &name)
+shader_uniform program::cache_uniform(const std::string &name)
 {
     auto uni = get_uniform(name);
     cached_uniforms.push_back(uni);
@@ -135,11 +135,11 @@ static int P_build_shader_part(std::string source, GLenum type)
     return id;
 }
 
-shared<shader_program> make_program(const std::string &vert, const std::string &frag,
-                                    std::function<void(shared<shader_program> program)> callback_setup)
+shared<program> make_program(const std::string &vert, const std::string &frag,
+                             std::function<void(shared<program> program)> callback_setup)
 {
-    shared<shader_program> program = std::make_shared<shader_program>();
-    int id = program->P_program_id = glCreateProgram();
+    shared<program> prog = std::make_shared<program>();
+    int id = prog->P_program_id = glCreateProgram();
     int vert_id = P_build_shader_part(vert, GL_VERTEX_SHADER);
     int frag_id = P_build_shader_part(frag, GL_FRAGMENT_SHADER);
 
@@ -153,9 +153,9 @@ shared<shader_program> make_program(const std::string &vert, const std::string &
     glDeleteShader(vert_id);
     glDeleteShader(frag_id);
 
-    program->callback_setup = callback_setup;
+    prog->callback_setup = callback_setup;
 
-    return program;
+    return prog;
 }
 
 static const std::string P_dvert_textured = "#version 330 core\n"
@@ -197,13 +197,13 @@ static const std::string P_dfrag_colored = "#version 330 core\n"
                                            "    fragColor = o_color;\n"
                                            "}";
 
-static shared<shader_program> P_builtin_colored = nullptr, P_builtin_textured = nullptr;
+static shared<program> P_builtin_colored = nullptr, P_builtin_textured = nullptr;
 
-shared<shader_program> make_program(builtin_shader_type type)
+shared<program> make_program(builtin_shader_type type)
 {
     if (P_builtin_colored == nullptr || P_builtin_textured == nullptr)
     {
-        P_builtin_colored = make_program(P_dvert_colored, P_dfrag_colored, [](shared<shader_program> program) {
+        P_builtin_colored = make_program(P_dvert_colored, P_dfrag_colored, [](shared<program> program) {
             program->get_attrib(0).layout(shader_vertex_data_type::FLOAT, 2, 16, 0);
             program->get_attrib(1).layout(shader_vertex_data_type::HALF_FLOAT, 4, 16, 8);
 
@@ -211,7 +211,7 @@ shared<shader_program> make_program(builtin_shader_type type)
                 return;
             program->cache_uniform("u_proj"); // 0
         });
-        P_builtin_textured = make_program(P_dvert_textured, P_dfrag_textured, [](shared<shader_program> program) {
+        P_builtin_textured = make_program(P_dvert_textured, P_dfrag_textured, [](shared<program> program) {
             program->get_attrib(0).layout(shader_vertex_data_type::FLOAT, 2, 24, 0);
             program->get_attrib(1).layout(shader_vertex_data_type::HALF_FLOAT, 4, 24, 8);
             program->get_attrib(2).layout(shader_vertex_data_type::FLOAT, 2, 24, 16);

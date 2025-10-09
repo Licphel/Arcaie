@@ -1,8 +1,15 @@
 #pragma once
 #include <core/ecs.h>
+#include <core/math.h>
 
 namespace arcaie::world
 {
+
+struct P_ecs_motion
+{
+    quad bound;
+    vec2 velocity;
+};
 
 struct level
 {
@@ -68,9 +75,10 @@ struct level
         tick_phase(ecs_phase::POST);
     }
 
-    template <typename T> void each(const std::string &k, const std::function<void(const entity_ref &ref, T &cmp)> &f)
+    template <typename T>
+    void each(const std::string &k, const std::function<void(level &lvl, const entity_ref &ref, T &cmp)> &f)
     {
-        get_pool<T>(k)->each(f);
+        get_pool<T>(k)->each([this, f](const entity_ref &ref, T &cmp) { f(*this, ref, cmp); });
     }
 };
 

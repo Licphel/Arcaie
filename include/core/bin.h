@@ -129,6 +129,7 @@ struct binary_value
         default:
             arcthrow(ARC_FATAL, "not convertible.");
         }
+        return T{};
     }
 };
 

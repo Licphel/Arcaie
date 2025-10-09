@@ -183,7 +183,7 @@ shared<font> load_font(const path_handle &path, double res_h, double pixel_h)
     FT_LibraryRec_ *lib;
     FT_FaceRec_ *face;
     FT_Init_FreeType(&lib);
-    FT_New_Face(lib, path.absolute.c_str(), 0, &face);
+    FT_New_Face(lib, path.abs_path.c_str(), 0, &face);
     FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 
     fptr->P_pimpl->face_ptr = face;

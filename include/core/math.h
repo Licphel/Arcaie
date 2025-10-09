@@ -65,9 +65,9 @@ struct transform
     transform &identity();
     transform &load(const transform &o);
     transform &orthographic(float left, float right, float bottom, float top);
-    transform &multiply(const transform &o);
+    transform &mul(const transform &o);
     float det() const;
-    transform get_invert() const;
+    transform &invert();
     void apply(vec2 &v) const;
     transform &translate(float tx, float ty);
     transform &scale(float sx, float sy);

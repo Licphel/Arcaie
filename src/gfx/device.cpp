@@ -1,5 +1,3 @@
-#include <al/al.h>
-#include <al/alc.h>
 #include <algorithm>
 #include <chrono>
 #include <core/log.h>

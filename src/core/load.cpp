@@ -1,7 +1,8 @@
-#include <core/load.h>
-#include <gfx/image.h>
-#include <gfx/font.h>
 #include <audio/device.h>
+#include <core/load.h>
+#include <gfx/device.h>
+#include <gfx/font.h>
+#include <gfx/image.h>
 
 using namespace arcaie::gfx;
 using namespace arcaie::audio;
@@ -79,10 +80,26 @@ void asset_loader::next()
             if (!P_end_called && event_on_end)
             {
                 event_on_end();
+                free();
                 P_end_called = true;
             }
         }
     }
+}
+
+void asset_loader::free_node(const unique_id &id)
+{
+    P_resource_map.erase(id);
+}
+
+void asset_loader::free()
+{
+    P_resource_map.clear();
+}
+
+asset_loader::~asset_loader()
+{
+    free();
 }
 
 shared<asset_loader> make_loader(const std::string &scope, const path_handle &root)
@@ -99,12 +116,15 @@ void make_loader_equipment(shared<asset_loader> loader, asset_loader_equip equip
     {
     case asset_loader_equip::PNG_AS_TEXTURE:
         loader->process_strategy_map[".png"] = [](const path_handle &path, const unique_id &id) {
-            P_resource_map[id] = std::any(make_texture(load_image(path)));
+            shared<image> img = load_image(path);
+            shared<texture> tex = make_texture(img);
+            P_resource_map[id] = std::any(tex);
         };
         break;
     case asset_loader_equip::PNG_AS_IMAGE:
         loader->process_strategy_map[".png"] = [](const path_handle &path, const unique_id &id) {
-            P_resource_map[id] = std::any(load_image(path));
+            shared<image>img = load_image(path);
+            P_resource_map[id] = std::any(img);
         };
         break;
     case asset_loader_equip::TXT:
@@ -114,17 +134,11 @@ void make_loader_equipment(shared<asset_loader> loader, asset_loader_equip equip
         break;
     case asset_loader_equip::WAVE:
         loader->process_strategy_map[".wav"] = [](const path_handle &path, const unique_id &id) {
-            P_resource_map[id] = std::any(load_track(path));
+            shared<track> track = load_track(path);
+            P_resource_map[id] = std::any(track);
         };
         break;
     case asset_loader_equip::FONT:
-        // hard encoded warn: check later
-        loader->process_strategy_map[".ttf"] = [](const path_handle &path, const unique_id &id) {
-            P_resource_map[id] = std::any(load_font(path, 12, 12));
-        };
-        loader->process_strategy_map[".otf"] = [](const path_handle &path, const unique_id &id) {
-            P_resource_map[id] = std::any(load_font(path, 12, 12));
-        };
         break;
     case asset_loader_equip::SCRIPT:
     case asset_loader_equip::SHADER:

@@ -1,10 +1,9 @@
 #pragma once
 #include <core/io.h>
-#include <string>
-#include <gfx/color.h>
-#include <core/math.h>
 #include <core/math.h>
 #include <functional>
+#include <gfx/color.h>
+#include <string>
 
 namespace arcaie::gfx
 {
@@ -42,14 +41,14 @@ struct shader_uniform
     void set(const transform &v);
 };
 
-struct shader_program
+struct program
 {
     /* unstable */ unsigned int P_program_id = 0;
-    std::function<void(shared<shader_program> program)> callback_setup;
+    std::function<void(shared<program> program)> callback_setup;
     /* unstable */ bool P_has_setup = false;
     std::vector<shader_uniform> cached_uniforms;
 
-    ~shader_program();
+    ~program();
     shader_attrib get_attrib(const std::string &name);
     shader_attrib get_attrib(int index);
     shader_uniform get_uniform(const std::string &name);
@@ -62,8 +61,8 @@ enum class builtin_shader_type
     COLORED
 };
 
-shared<shader_program> make_program(const std::string &vert, const std::string &frag,
-                                    std::function<void(shared<shader_program> program)> callback_setup);
-shared<shader_program> make_program(builtin_shader_type type);
+shared<program> make_program(const std::string &vert, const std::string &frag,
+                             std::function<void(shared<program> program)> callback_setup);
+shared<program> make_program(builtin_shader_type type);
 
 } // namespace arcaie::gfx

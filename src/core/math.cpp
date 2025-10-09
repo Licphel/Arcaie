@@ -1,5 +1,5 @@
-#include <core/math.h>
 #include "math.h"
+#include <core/math.h>
 
 namespace arcaie
 {
@@ -180,7 +180,7 @@ transform &transform::orthographic(float left, float right, float bottom, float 
     return *this;
 }
 
-transform &transform::multiply(const transform &o)
+transform &transform::mul(const transform &o)
 {
     float t00 = m00 * o.m00 + m01 * o.m10;
     float t01 = m00 * o.m01 + m01 * o.m11;
@@ -202,11 +202,13 @@ float transform::det() const
     return m00 * m11 - m01 * m10;
 }
 
-transform transform::get_invert() const
+transform &transform::invert()
 {
     float id = 1.0f / det();
-    return transform(m11 * id, -m01 * id, (m01 * m12 - m11 * m02) * id, -m10 * id, m00 * id,
-                     (m10 * m02 - m00 * m12) * id);
+    transform nt =
+        transform(m11 * id, -m01 * id, (m01 * m12 - m11 * m02) * id, -m10 * id, m00 * id, (m10 * m02 - m00 * m12) * id);
+    load(nt);
+    return *this;
 }
 
 void transform::apply(vec2 &v) const
