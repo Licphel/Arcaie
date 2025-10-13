@@ -1,13 +1,11 @@
 #pragma once
 #include <core/def.h>
 #include <core/log.h>
-#include <core/uuid.h>
-#include <cstring>
-#include <string>
-#include <type_traits>
 #include <vector>
+#include <cstring>
+#include <core/uuid.h>
 
-namespace arcaie
+namespace arc
 {
 
 // check if the system is little-endian.
@@ -114,4 +112,4 @@ struct byte_buf
     void compact();
 };
 
-} // namespace arcaie
+} // namespace arc

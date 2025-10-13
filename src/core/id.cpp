@@ -1,6 +1,6 @@
 #include <core/id.h>
 
-namespace arcaie
+namespace arc
 {
 
 unique_id::unique_id() = default;
@@ -61,4 +61,4 @@ bool unique_id::operator<(const unique_id &other) const
     return other.concat < concat;
 }
 
-} // namespace arcaie
+} // namespace arc

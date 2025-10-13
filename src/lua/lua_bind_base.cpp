@@ -3,8 +3,10 @@
 #include <core/bio.h>
 #include <core/io.h>
 #include <lua/lua.h>
+#include <core/buffer.h>
+#include <core/uuid.h>
 
-namespace arcaie::lua
+namespace arc::lua
 {
 
 void lua_bind_base(lua_state &lua)
@@ -109,7 +111,14 @@ void lua_bind_base(lua_state &lua)
     buf_type["peek_short"] = [](byte_buf &self) -> short { return self.peek<short>(); };
     buf_type["peek_ushort"] = [](byte_buf &self) -> unsigned short { return self.peek<unsigned short>(); };
 
+    auto uuid_type = lua_new_usertype<uuid>(_n, "uuid", lua_native);
+    uuid_type["make"] = &uuid::make;
+    uuid_type["empty"] = &uuid::empty;
+    uuid_type["P_hash"] = &uuid::P_hash;
+    uuid_type["__eq"] = &uuid::operator==;
+    uuid_type["__lt"] = &uuid::operator<;
+
     lua["arc"]["io"] = _n;
 }
 
-} // namespace arcaie::lua
+} // namespace arc::lua

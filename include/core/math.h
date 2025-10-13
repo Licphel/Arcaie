@@ -1,6 +1,6 @@
 #pragma once
 
-namespace arcaie
+namespace arc
 {
 
 // immutable 2d vector
@@ -108,4 +108,4 @@ struct quad
     double area() const;
 };
 
-} // namespace arcaie
+} // namespace arc

@@ -1,11 +1,11 @@
 #pragma once
-#include <map>
-#include <core/id.h>
 #include <core/def.h>
-#include <functional>
 #include <stack>
+#include <map>
+#include <functional>
+#include <core/id.h>
 
-namespace arcaie
+namespace arc
 {
 
 template <typename T> struct registry;
@@ -59,4 +59,4 @@ template <typename T> struct registry
     }
 };
 
-} // namespace arcaie
+} // namespace arc

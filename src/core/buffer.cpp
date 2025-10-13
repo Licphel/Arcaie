@@ -1,6 +1,7 @@
 #include <core/buffer.h>
+#include <core/uuid.h>
 
-namespace arcaie
+namespace arc
 {
 
 bool P_check_is_system_little_endian()
@@ -84,7 +85,7 @@ void byte_buf::ensure_capacity(size_t needed)
 void byte_buf::ensure_readable(size_t needed) const
 {
     if (readable_bytes() < needed)
-        arcthrow(ARC_FATAL, "byte buffer read out of range!");
+        print_throw(ARC_FATAL, "byte buffer read out of range!");
 }
 
 void byte_buf::write_bytes(const void *src, size_t len)
@@ -140,7 +141,7 @@ std::string byte_buf::read_string()
 uuid byte_buf::read_uuid()
 {
     ensure_readable(16);
-    uuid u = uuid_null();
+    uuid u;
     read_bytes(u.bytes, 16);
     return u;
 }
@@ -154,7 +155,7 @@ void byte_buf::skip(size_t len)
 void byte_buf::set_read_pos(size_t pos)
 {
     if (pos > P_wpos)
-        arcthrow(ARC_FATAL, "byte buf read pos out of range!");
+        print_throw(ARC_FATAL, "byte buf read pos out of range!");
     P_rpos = pos;
 }
 
@@ -180,7 +181,7 @@ size_t byte_buf::write_pos() const
 std::vector<byte> byte_buf::to_vector() const
 {
     if (P_wpos > P_data.size())
-        arcthrow(ARC_FATAL, "byte buf write pos out of range!");
+        print_throw(ARC_FATAL, "byte buf write pos out of range!");
     return std::vector<byte>(P_data.begin(), P_data.begin() + P_wpos);
 }
 
@@ -209,4 +210,4 @@ void byte_buf::compact()
     }
 }
 
-} // namespace arcaie
+} // namespace arc

@@ -33,12 +33,9 @@ endif()
 # set output
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
-set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
-
 file(GLOB_RECURSE SOURCES 
-    ${SRC_DIR}/*.cpp
-    ${SRC_DIR}/**/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/**/*.cpp
 )
 
 file(GLOB_RECURSE MODULE_IFACES CONFIGURE_DEPENDS
@@ -54,7 +51,9 @@ target_sources(${EXECUTABLE_NAME}
     PUBLIC FILE_SET CXX_MODULES FILES ${MODULE_IFACES}
     PRIVATE ${MODULE_IMPLS} src/main.cpp)
 
-target_include_directories(${EXECUTABLE_NAME} PRIVATE ${INCLUDE_DIR})
+target_include_directories(${EXECUTABLE_NAME} 
+    PRIVATE ${CMAKE_SOURCE_DIR}/include
+    PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 set(MSYS2_ROOT "C:/msys64/mingw64")
 
@@ -62,11 +61,6 @@ target_include_directories(${EXECUTABLE_NAME} PRIVATE
     ${MSYS2_ROOT}/include
     ${MSYS2_ROOT}/include/freetype2
 )
-
-# precompile
-# target_precompile_headers(${EXECUTABLE_NAME} PRIVATE
-#    "${INCLUDE_DIR}/pch.hpp"
-#)
 
 # include & linkages
 

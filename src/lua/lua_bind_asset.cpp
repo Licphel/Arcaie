@@ -4,11 +4,12 @@
 #include <gfx/font.h>
 #include <gfx/image.h>
 #include <lua/lua.h>
+#include <gfx/shader.h>
 
-using namespace arcaie::gfx;
-using namespace arcaie::audio;
+using namespace arc::gfx;
+using namespace arc::audio;
 
-namespace arcaie::lua
+namespace arc::lua
 {
 
 void lua_bind_asset(lua_state &lua)
@@ -37,26 +38,26 @@ void lua_bind_asset(lua_state &lua)
             P_get_resource_map()[id] = lua_protected_call(f, path);
         };
     };
-    _n["make_loader"] = &make_loader;
+    loader_type["make"] = &asset_loader::make;
 
     // asset_mapping
     _n["has"] =
         lua_combine([](const unique_id &id) { return P_get_resource_map().find(id) != P_get_resource_map().end(); },
                     [](const std::string &id) { return P_get_resource_map().find(id) != P_get_resource_map().end(); });
-    _n["texture"] = lua_combine([](const unique_id &id) { return make_res<shared<texture>>(id); },
-                                [](const std::string &id) { return make_res<shared<texture>>(id); });
-    _n["track"] = lua_combine([](const unique_id &id) { return make_res<shared<track>>(id); },
-                              [](const std::string &id) { return make_res<shared<track>>(id); });
-    _n["font"] = lua_combine([](const unique_id &id) { return make_res<shared<font>>(id); },
-                             [](const std::string &id) { return make_res<shared<font>>(id); });
-    _n["image"] = lua_combine([](const unique_id &id) { return make_res<shared<image>>(id); },
-                              [](const std::string &id) { return make_res<shared<image>>(id); });
-    _n["program"] = lua_combine([](const unique_id &id) { return make_res<shared<program>>(id); },
-                                [](const std::string &id) { return make_res<shared<program>>(id); });
-    _n["text"] = lua_combine([](const unique_id &id) { return make_res<std::string>(id); },
-                             [](const std::string &id) { return make_res<std::string>(id); });
+    _n["texture"] = lua_combine([](const unique_id &id) { return fetch<std::shared_ptr<texture>>(id); },
+                                [](const std::string &id) { return fetch<std::shared_ptr<texture>>(id); });
+    _n["track"] = lua_combine([](const unique_id &id) { return fetch<std::shared_ptr<track>>(id); },
+                              [](const std::string &id) { return fetch<std::shared_ptr<track>>(id); });
+    _n["font"] = lua_combine([](const unique_id &id) { return fetch<std::shared_ptr<font>>(id); },
+                             [](const std::string &id) { return fetch<std::shared_ptr<font>>(id); });
+    _n["image"] = lua_combine([](const unique_id &id) { return fetch<std::shared_ptr<image>>(id); },
+                              [](const std::string &id) { return fetch<std::shared_ptr<image>>(id); });
+    _n["program"] = lua_combine([](const unique_id &id) { return fetch<std::shared_ptr<program>>(id); },
+                                [](const std::string &id) { return fetch<std::shared_ptr<program>>(id); });
+    _n["text"] = lua_combine([](const unique_id &id) { return fetch<std::string>(id); },
+                             [](const std::string &id) { return fetch<std::string>(id); });
 
-    lua["A"]["asset"] = _n;
+    lua["arc"]["asset"] = _n;
 }
 
-} // namespace arcaie::lua
+} // namespace arc::lua

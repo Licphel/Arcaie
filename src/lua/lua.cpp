@@ -6,10 +6,10 @@
 #include <lua/lua.h>
 
 using namespace sol;
-using namespace arcaie::gfx;
-using namespace arcaie::audio;
+using namespace arc::gfx;
+using namespace arc::audio;
 
-namespace arcaie::lua
+namespace arc::lua
 {
 
 static lua_state lua;
@@ -42,9 +42,9 @@ void lua_make_state()
     lua.open_libraries(lib::ffi, lib::jit);
 
     if (lua["jit"].valid())
-        arclog(ARC_INFO, "lua-jit is enabled.");
+        print(ARC_INFO, "lua-jit is enabled.");
     else
-        arclog(ARC_INFO, "lua-jit is disabled.");
+        print(ARC_INFO, "lua-jit is disabled.");
 
     lua.set_exception_handler([](lua_State *L, sol::optional<const std::exception &> ex, sol::string_view desc) {
         std::string error_msg;
@@ -53,7 +53,7 @@ void lua_make_state()
         else
             error_msg = std::string("lua error: ") + std::string(desc);
 
-        arclog(ARC_WARN, error_msg);
+        print(ARC_WARN, error_msg);
         lua_pushstring(L, error_msg.c_str());
         return 1;
     });
@@ -91,6 +91,7 @@ extern void lua_bind_ecs(lua_state &lua);
 extern void lua_bind_asset(lua_state &lua);
 extern void lua_bind_base(lua_state &lua);
 extern void lua_bind_tcodec(lua_state &lua);
+extern void lua_bind_net(lua_state &lua);
 
 void lua_bind_modules()
 {
@@ -102,6 +103,7 @@ void lua_bind_modules()
     lua_bind_asset(lua);
     lua_bind_gfx(lua);
     lua_bind_tcodec(lua);
+    lua_bind_net(lua);
 }
 
-} // namespace arcaie::lua
+} // namespace arc::lua

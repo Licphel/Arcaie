@@ -1,7 +1,7 @@
 #include <gfx/camera.h>
 #include <gfx/device.h>
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 void camera::apply()
@@ -105,7 +105,7 @@ static camera P_cam_abs = {};
 static camera P_cam_gui = {};
 static camera P_cam_world = {};
 
-camera &get_absolute_camera()
+camera &camera::normal()
 {
     vec2 size = tk_get_size();
     if (size.x == 0 || size.y == 0)
@@ -117,7 +117,7 @@ camera &get_absolute_camera()
     return P_cam_abs;
 }
 
-camera &get_gui_camera(bool only_int, double fixed_resolution)
+camera &camera::gui(bool only_int, double fixed_resolution)
 {
     vec2 size = tk_get_size();
     if (size.x == 0 || size.y == 0)
@@ -139,7 +139,7 @@ camera &get_gui_camera(bool only_int, double fixed_resolution)
     return P_cam_gui;
 }
 
-camera &get_world_camera(vec2 center, double sight_horizontal)
+camera &camera::world(vec2 center, double sight_horizontal)
 {
     vec2 size = tk_get_size();
     if (size.x == 0 || size.y == 0)
@@ -167,4 +167,4 @@ camera &get_world_camera(vec2 center, double sight_horizontal)
     return P_cam_world;
 }
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

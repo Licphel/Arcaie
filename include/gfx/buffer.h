@@ -1,23 +1,12 @@
 #pragma once
+#include <core/def.h>
 #include <cstring>
-#include <gfx/image.h>
-#include <gfx/shader.h>
-#include <memory>
 #include <vector>
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
-enum class graph_mode
-{
-    COLORED_POINT = 0,
-    COLORED_LINE = 1,
-    COLORED_TRIANGLE = 2,
-    COLORED_QUAD = 3,
-
-    // ARC_TEXTURED_TRIANGLE = 16, <-- not implemented yet
-    TEXTURED_QUAD = 17
-};
+struct brush;
 
 // currently it only supports quad-drawing indexing.
 // maybe in the future I'll extend it.
@@ -70,8 +59,9 @@ struct complex_buffer
     void new_index(int count);
     void end_quad();
     void clear();
+    std::shared_ptr<brush> derive_brush();
+
+    static std::shared_ptr<complex_buffer> make();
 };
 
-shared<complex_buffer> make_buffer();
-
-} // namespace arcaie::gfx
+} // namespace arc::gfx

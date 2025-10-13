@@ -1,17 +1,12 @@
-#include <algorithm>
+#include <gfx/image.h>
 #include <core/log.h>
 #include <core/math.h>
 #include <gfx/atlas.h>
-#include <vector>
-
-// clang-format off
-#include <gl/glew.h>
-#include <gl/gl.h>
-// clang-format on
+#include <algorithm>
 
 #define PADDING 1
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 struct atlas::P_impl
@@ -33,8 +28,8 @@ void atlas::begin()
     P_p->free_rects.clear();
     P_p->free_rects.push_back(quad(0, 0, width, height));
 
-    output_image = make_image(width, height, pixels);
-    output_texture = make_texture(nullptr);
+    output_image = image::make(width, height, pixels);
+    output_texture = texture::make(nullptr);
 
     // pre-set
     output_texture->full_width = output_image->width = width;
@@ -45,10 +40,10 @@ void atlas::begin()
 
 void atlas::end()
 {
-    lazylink_texture_data(output_texture, output_image);
+    output_texture->P_link_data(output_image);
 }
 
-shared<texture> atlas::accept(shared<image> image)
+std::shared_ptr<texture> atlas::accept(std::shared_ptr<image> image)
 {
     if (!image || !image->pixels)
         return nullptr;
@@ -68,7 +63,7 @@ shared<texture> atlas::accept(shared<image> image)
             best_score = score, best = (int)i;
     }
     if (best == -1)
-        arcthrow(ARC_FATAL, "atlas is not big enough. please expand it.");
+        print_throw(ARC_FATAL, "atlas is not big enough. please expand it.");
 
     quad used = free_rects[best];
     int dx = used.x;
@@ -121,10 +116,10 @@ shared<texture> atlas::accept(shared<image> image)
                                     [](const quad &r) { return r.width == 0 || r.height == 0; }),
                      free_rects.end());
 
-    return cut_texture(output_texture, quad(dx, dy, image->width, image->height));
+    return output_texture->cut(quad(dx, dy, image->width, image->height));
 }
 
-void atlas::imgcpy(shared<image> image, int dest_x, int dest_y)
+void atlas::imgcpy(std::shared_ptr<image> image, int dest_x, int dest_y)
 {
     // suppose channels are the same. (rgba format)
     for (int y = 0; y < image->height; ++y)
@@ -140,9 +135,9 @@ void atlas::imgcpy(shared<image> image, int dest_x, int dest_y)
     }
 }
 
-shared<atlas> make_atlas(int w, int h)
+std::shared_ptr<atlas> atlas::make(int w, int h)
 {
     return std::make_shared<atlas>(w, h);
 }
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

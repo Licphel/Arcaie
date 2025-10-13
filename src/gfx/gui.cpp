@@ -1,16 +1,19 @@
 #include <core/chcvt.h>
-#include <core/embit.h>
 #include <core/input.h>
 #include <core/log.h>
 #include <core/time.h>
+#include <gfx/brush.h>
+#include <gfx/camera.h>
+#include <gfx/font.h>
 #include <gfx/gui.h>
+#include <algorithm>
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
-std::vector<shared<gui>> gui::active_guis;
+std::vector<std::shared_ptr<gui>> gui::active_guis;
 
-void gui::render_currents(brush *brush)
+void gui::render_currents(std::shared_ptr<brush> brush)
 {
     for (auto &g : active_guis)
         g->render(brush);
@@ -22,14 +25,14 @@ void gui::tick_currents()
         g->tick();
 }
 
-void gui::join(shared<gui_component> comp)
+void gui::join(std::shared_ptr<gui_component> comp)
 {
     comp->P_index_in_gui = (int)P_components.size();
     P_components.push_back(comp);
     comp->parent = this;
 }
 
-void gui::remove(shared<gui_component> comp)
+void gui::remove(std::shared_ptr<gui_component> comp)
 {
     int idx = comp->P_index_in_gui;
     P_components.erase(P_components.begin() + idx);
@@ -54,7 +57,7 @@ void gui::display()
 void gui::close()
 {
     active_guis.erase(std::remove_if(active_guis.begin(), active_guis.end(),
-                                     [this](const shared<gui> &g) { return g.get() == this; }),
+                                     [this](const std::shared_ptr<gui> &g) { return g.get() == this; }),
                       active_guis.end());
     if (on_closed)
         on_closed(*this);
@@ -66,9 +69,9 @@ bool gui::is_top()
     return v.size() == 0 ? false : v[v.size() - 1].get() == this;
 }
 
-void gui::render(brush *brush)
+void gui::render(std::shared_ptr<brush> brush)
 {
-    auto &cam = get_gui_camera();
+    auto &cam = camera::gui();
     // do not refer to the old camera - it will change soon.
     auto old_cam = brush->P_camera;
     brush->use_camera(cam);
@@ -87,7 +90,7 @@ void gui::render(brush *brush)
 
 void gui::tick()
 {
-    auto &cam = get_gui_camera();
+    auto &cam = camera::gui();
 
     bool top = is_top();
     if (!top)
@@ -207,7 +210,7 @@ void P_xside_scroller::tick()
     }
 }
 
-void P_xside_scroller::render(brush *brush)
+void P_xside_scroller::render(std::shared_ptr<brush> brush)
 {
     double per = (c->region.height - P_inflation * 2) / hsize;
     if (per > 1)
@@ -233,7 +236,7 @@ void P_xside_scroller::render(brush *brush)
 
 // ---------------- gui_button ----------------
 
-void gui_button::render(brush *brush)
+void gui_button::render(std::shared_ptr<brush> brush)
 {
     on_render(brush, this);
 }
@@ -274,7 +277,7 @@ void gui_button::tick()
 
 // ---------------- gui_text_view -------------
 
-void gui_text_view::render(brush *brush)
+void gui_text_view::render(std::shared_ptr<brush> brush)
 {
     P_scroller.c = this;
     on_render(brush, this);
@@ -288,18 +291,16 @@ void gui_text_view::render(brush *brush)
 
     double pos = lerp(P_scroller.P_prevp, P_scroller.pos);
 
-    const bitmask<font_align> align = mask(font_align::UP, font_align::LEFT);
-
     brush->scissor(region);
-    font_render_bound bd =
-        font->make_vtx(brush, content, region.x + o, region.y - pos, align, region.width - o * 3 - P_scroller.bw);
+    font_render_bound bd = font->make_vtx(brush, content, region.x + o, region.y - pos, font_align::NORMAL,
+                                          region.width - o * 3 - P_scroller.bw);
     brush->scissor_end();
     P_scroller.hsize = bd.region.height;
     P_scroller.render(brush);
 
     if (parent->focus.get() == this && !cursor_shiner)
     {
-        bd = font->make_vtx(nullptr, content.substr(0, pointer), region.x + o, region.y - pos, align,
+        bd = font->make_vtx(nullptr, content.substr(0, pointer), region.x + o, region.y - pos, font_align::NORMAL,
                             region.width - o * 3 - P_scroller.bw);
         x += bd.last_width;
 
@@ -409,4 +410,4 @@ void gui_text_view::tick()
     }
 }
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

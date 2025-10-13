@@ -2,14 +2,17 @@
 #include <gfx/brush.h>
 #include <gfx/device.h>
 #include <gfx/mesh.h>
-#include <memory>
+#include <gfx/image.h>
+#include <core/math.h>
+#include <gfx/shader.h>
+#include <gfx/buffer.h>
 
 // clang-format off
 #include <gl/glew.h>
 #include <gl/gl.h>
 // clang-format on
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 static uint16_t P_to_half(float f)
@@ -33,7 +36,7 @@ static uint16_t P_to_half(float f)
     return uint16_t((s << 15) | (E << 10) | (m >> 13));
 }
 
-void P_w_half(shared<complex_buffer> buf, const color &col)
+void P_w_half(complex_buffer *buf, const color &col)
 {
     buf->vtx(P_to_half(col.r)).vtx(P_to_half(col.g)).vtx(P_to_half(col.b)).vtx(P_to_half(col.a));
 }
@@ -42,15 +45,8 @@ brush::brush()
 {
     cl_norm();
     ts_push();
-    P_default_colored = make_program(builtin_shader_type::COLORED);
-    P_default_textured = make_program(builtin_shader_type::TEXTURED);
-}
-
-shared<complex_buffer> brush::lock_buffer()
-{
-    if (wbuf.expired())
-        arcthrow(ARC_FATAL, "try to paint on an expired buffer.");
-    return wbuf.lock();
+    P_default_colored = program::make(builtin_program_type::COLORED);
+    P_default_textured = program::make(builtin_program_type::TEXTURED);
 }
 
 graph_state &brush::current_state()
@@ -134,7 +130,7 @@ void brush::use_camera(const camera &cam)
     viewport(cam.viewport);
 }
 
-void brush::use_program(shared<program> program)
+void brush::use_program(std::shared_ptr<program> program)
 {
     if (P_state.prog != program)
     {
@@ -160,7 +156,7 @@ transform brush::get_combined_transform()
 
 void brush::flush()
 {
-    auto buf = lock_buffer();
+    auto buf = wbuf;
     auto msh = P_mesh_root;
 
     if (buf->vertex_buf.size() <= 0)
@@ -168,9 +164,10 @@ void brush::flush()
 
     // ignore empty-flushing.
     if (P_is_in_mesh)
-        arcthrow(ARC_FATAL, "it seems that somewhere the brush is flushed in a mesh. the state cannot be consistent!");
+        print_throw(ARC_FATAL,
+                    "it seems that somewhere the brush is flushed in a mesh. the state cannot be consistent!");
 
-    shared<program> program_used;
+    std::shared_ptr<program> program_used;
     if (P_state.prog != nullptr && P_state.prog->P_program_id != 0)
         program_used = P_state.prog;
     else
@@ -203,7 +200,7 @@ void brush::flush()
         P_state.callback_uniform(program_used);
 
     if (program_used->cached_uniforms.size() == 0)
-        arcthrow(ARC_FATAL, "please cache at lease a uniform u_proj.");
+        print_throw(ARC_FATAL, "please cache at lease a uniform u_proj.");
     else
         program_used->cached_uniforms[0].set(get_combined_transform());
 
@@ -221,7 +218,7 @@ void brush::flush()
     switch (P_state.mode)
     {
     case graph_mode::TEXTURED_QUAD:
-        bind_texture(1, P_state.texture);
+        P_state.texture->P_bind(1);
         glDrawElements(GL_TRIANGLES, buf->index_count, GL_UNSIGNED_INT, 0);
         break;
     case graph_mode::COLORED_QUAD:
@@ -237,7 +234,7 @@ void brush::flush()
         glDrawArrays(GL_TRIANGLES, 0, buf->vertex_count);
         break;
     default:
-        arcthrow(ARC_FATAL, "uknown graphics mode.");
+        print_throw(ARC_FATAL, "uknown graphics mode.");
     }
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -258,14 +255,14 @@ void brush::assert_mode(graph_mode mode)
     }
 }
 
-static unsigned int P_get_tex_root(shared<texture> tex)
+static unsigned int P_get_tex_root(std::shared_ptr<texture> tex)
 {
     if (tex == nullptr)
         return 0;
     return tex->P_texture_id;
 }
 
-void brush::assert_texture(shared<texture> tex)
+void brush::assert_texture(std::shared_ptr<texture> tex)
 {
     if (P_get_tex_root(P_state.texture) != P_get_tex_root(tex))
     {
@@ -274,11 +271,11 @@ void brush::assert_texture(shared<texture> tex)
     }
 }
 
-void brush::draw_texture(shared<texture> tex, const quad &dst, const quad &src, bitmask<brush_flag> flag)
+void brush::draw_texture(std::shared_ptr<texture> tex, const quad &dst, const quad &src, long flag)
 {
     if (tex == nullptr)
         return;
-    auto buf = lock_buffer();
+    auto buf = wbuf;
 
     assert_mode(graph_mode::TEXTURED_QUAD);
     assert_texture(tex);
@@ -288,10 +285,10 @@ void brush::draw_texture(shared<texture> tex, const quad &dst, const quad &src, 
     float u2 = (src.prom_x() + tex->u) / tex->full_width;
     float v2 = (src.prom_y() + tex->v) / tex->full_height;
 
-    if (flag.test(brush_flag::FLIP_X))
+    if (flag & brush_flag::FLIP_X)
         std::swap(u, u2);
 #ifdef ARC_Y_IS_DOWN
-    if (!flag.test(brush_flag::FLIP_Y))
+    if (!(flag & brush_flag::FLIP_Y))
 #else
     if ((flag & brush_flag::FLIP_Y))
 #endif
@@ -318,7 +315,7 @@ void brush::draw_texture(shared<texture> tex, const quad &dst, const quad &src, 
     buf->end_quad();
 }
 
-void brush::draw_texture(shared<texture> tex, const quad &dst, bitmask<brush_flag> flag)
+void brush::draw_texture(std::shared_ptr<texture> tex, const quad &dst, long flag)
 {
     if (tex != nullptr)
         draw_texture(tex, dst, quad(0.0, 0.0, tex->width, tex->height), flag);
@@ -326,7 +323,7 @@ void brush::draw_texture(shared<texture> tex, const quad &dst, bitmask<brush_fla
 
 void brush::draw_rect(const quad &dst)
 {
-    auto buf = lock_buffer();
+    auto buf = wbuf;
 
     assert_mode(graph_mode::COLORED_QUAD);
 
@@ -362,7 +359,7 @@ void brush::draw_rect_outline(const quad &dst)
 
 void brush::draw_triagle(const vec2 &p1, const vec2 &p2, const vec2 &p3)
 {
-    auto buf = lock_buffer();
+    auto buf = wbuf;
 
     assert_mode(graph_mode::COLORED_TRIANGLE);
 
@@ -377,7 +374,7 @@ void brush::draw_triagle(const vec2 &p1, const vec2 &p2, const vec2 &p3)
 
 void brush::draw_line(const vec2 &p1, const vec2 &p2)
 {
-    auto buf = lock_buffer();
+    auto buf = wbuf;
 
     assert_mode(graph_mode::COLORED_LINE);
 
@@ -390,7 +387,7 @@ void brush::draw_line(const vec2 &p1, const vec2 &p2)
 
 void brush::draw_point(const vec2 &p)
 {
-    auto buf = lock_buffer();
+    auto buf = wbuf;
 
     assert_mode(graph_mode::COLORED_POINT);
 
@@ -402,7 +399,7 @@ void brush::draw_point(const vec2 &p)
 void brush::draw_oval(const quad &dst, int segs)
 {
     if (segs <= 1)
-        arcthrow(ARC_FATAL, "at least drawing an oval needs 2 segments.");
+        print_throw(ARC_FATAL, "at least drawing an oval needs 2 segments.");
 
     float x = dst.center_x();
     float y = dst.center_y();
@@ -423,7 +420,7 @@ void brush::draw_oval(const quad &dst, int segs)
 void brush::draw_oval_outline(const quad &dst, int segs)
 {
     if (segs <= 1)
-        arcthrow(ARC_FATAL, "at least drawing an oval needs 2 segments.");
+        print_throw(ARC_FATAL, "at least drawing an oval needs 2 segments.");
 
     float x = dst.center_x();
     float y = dst.center_y();
@@ -496,11 +493,4 @@ void brush::use_blend(blend_mode mode)
         glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
 }
 
-unique<brush> make_brush(shared<complex_buffer> buf)
-{
-    unique<brush> brush_ptr = std::make_unique<brush>();
-    brush_ptr->wbuf = buf;
-    return brush_ptr;
-}
-
-} // namespace arcaie::gfx
+} // namespace arc::gfx

@@ -1,13 +1,11 @@
-#include <algorithm>
-#include <chrono>
 #include <core/log.h>
 #include <core/time.h>
 #include <gfx/brush.h>
 #include <gfx/device.h>
 #include <gfx/image.h>
 #include <gfx/mesh.h>
-#include <thread>
-#include <vector>
+#include <core/key.h>
+#include <algorithm>
 
 // clang-format off
 #include <gl/glew.h>
@@ -15,13 +13,13 @@
 #include <glfw/glfw3.h>
 // clang-format on
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 static GLFWwindow *window;
 
 static std::vector<std::function<void()>> event_tick;
-static std::vector<std::function<void(brush *brush)>> event_render;
+static std::vector<std::function<void(std::shared_ptr<brush> brush)>> event_render;
 static std::vector<std::function<void()>> event_dispose;
 static std::vector<std::function<void(int w, int h)>> event_resize;
 static std::vector<std::function<void(int button, int action, int mods)>> event_mouse_state;
@@ -40,7 +38,7 @@ static bool P_cur_in_tick;
 static std::string P_char_seq;
 static bool P_just_ticked;
 
-static shared<mesh> direct_mesh = nullptr;
+static std::shared_ptr<mesh> direct_mesh = nullptr;
 
 double P_nanos()
 {
@@ -60,7 +58,7 @@ int tk_real_tps()
 void tk_make_handle()
 {
     if (!glfwInit())
-        arcthrow(ARC_FATAL, "glfw cannot initialize.");
+        print_throw(ARC_FATAL, "glfw cannot initialize.");
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
@@ -73,13 +71,13 @@ void tk_make_handle()
     if (window == NULL)
     {
         glfwTerminate();
-        arcthrow(ARC_FATAL, "glfw make window failed.");
+        print_throw(ARC_FATAL, "glfw make window failed.");
     }
 
     glfwMakeContextCurrent(window);
 
     if (glewInit() != GLEW_OK)
-        arcthrow(ARC_FATAL, "glew cannot initialize.");
+        print_throw(ARC_FATAL, "glew cannot initialize.");
 
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int nw, int nh) {
         for (auto &e : event_resize)
@@ -192,7 +190,7 @@ void tk_maximize()
     glfwMaximizeWindow(window);
 }
 
-void tk_icon(shared<image> img)
+void tk_icon(std::shared_ptr<image> img)
 {
     GLFWimage img_glfw;
     img_glfw.pixels = img->pixels;
@@ -201,7 +199,7 @@ void tk_icon(shared<image> img)
     glfwSetWindowIcon(window, 1, &img_glfw);
 }
 
-void tk_cursor(shared<image> img, vec2 hotspot)
+void tk_cursor(std::shared_ptr<image> img, vec2 hotspot)
 {
     GLFWimage img_glfw;
     img_glfw.pixels = img->pixels;
@@ -238,7 +236,7 @@ vec2 tk_get_pos()
 void tk_lifecycle(int fps, int tps, bool vsync)
 {
     // init global gfx usage
-    direct_mesh = make_mesh();
+    direct_mesh = mesh::make();
     direct_mesh->P_is_direct = true;
     // end region
     glfwSwapInterval(vsync ? 1 : 0);
@@ -287,7 +285,7 @@ void tk_lifecycle(int fps, int tps, bool vsync)
             {
                 clock::now().partial = std::clamp(1.0 - (logic_debt / DT_LOGIC_NS), 0.0, 1.0);
 
-                auto brush = direct_mesh->P_brush.get();
+                auto brush = direct_mesh->P_brush;
                 for (auto &e : event_render)
                     e(brush);
                 clock::now().render_ticks++;
@@ -311,7 +309,7 @@ void tk_lifecycle(int fps, int tps, bool vsync)
     }
     catch (std::exception &e)
     {
-        arclog(ARC_FATAL, "fatal error occurred: {}", e.what());
+        print(ARC_FATAL, "fatal error occurred: {}", e.what());
         // re-throw for debugging & stack trace.
         throw e;
     }
@@ -340,7 +338,7 @@ void tk_hook_event_tick(std::function<void()> callback)
     event_tick.push_back(callback);
 }
 
-void tk_hook_event_render(std::function<void(brush *brush)> callback)
+void tk_hook_event_render(std::function<void(std::shared_ptr<brush> brush)> callback)
 {
     event_render.push_back(callback);
 }
@@ -425,4 +423,4 @@ void P_tk_set_clipboard_text(const std::string &str)
     glfwSetClipboardString(window, str.c_str());
 }
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

@@ -1,12 +1,12 @@
 #pragma once
-#include <gfx/brush.h>
-#include <gfx/image.h>
-#include <gfx/font.h>
-#include <audio/device.h>
-#include <algorithm>
+#include <core/def.h>
 #include <core/time.h>
+#include <core/math.h>
+#include <functional>
+#include <gfx/brush.h>
+#include <gfx/font.h>
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 struct gui;
@@ -20,39 +20,39 @@ struct gui_component
     gui *parent;
 
     virtual ~gui_component() = default;
-    virtual void render(brush *brush) = 0;
+    virtual void render(std::shared_ptr<brush> brush) = 0;
     virtual void tick() = 0;
 };
 
 struct gui : std::enable_shared_from_this<gui>
 {
-    static std::vector<shared<gui>> active_guis;
-    static void render_currents(brush *brush);
+    static std::vector<std::shared_ptr<gui>> active_guis;
+    static void render_currents(std::shared_ptr<brush> brush);
     static void tick_currents();
 
-    std::vector<shared<gui_component>> P_components;
+    std::vector<std::shared_ptr<gui_component>> P_components;
     std::function<void(gui &g)> on_closed;
     std::function<void(gui &g)> on_displayed;
-    shared<gui_component> focus;
+    std::shared_ptr<gui_component> focus;
 
-    void join(shared<gui_component> comp);
-    void remove(shared<gui_component> comp);
+    void join(std::shared_ptr<gui_component> comp);
+    void remove(std::shared_ptr<gui_component> comp);
     void clear();
     void display();
     void close();
     bool is_top();
 
-    virtual void render(brush *brush);
+    virtual void render(std::shared_ptr<brush> brush);
     virtual void tick();
 };
 
-template <typename T, class... Args> shared<T> make_gui_component(Args &&...args)
+template <typename T, class... Args> std::shared_ptr<T> make_gui_component(Args &&...args)
 {
     static_assert(std::is_base_of<gui_component, T>::value, "T must be a subclass of gui_component.");
     return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
-template <typename T, class... Args> shared<T> make_gui(Args &&...args)
+template <typename T, class... Args> std::shared_ptr<T> make_gui(Args &&...args)
 {
     static_assert(std::is_base_of<gui, T>::value, "T must be a subclass of gui.");
     return std::make_shared<T>(std::forward<Args>(args)...);
@@ -74,7 +74,7 @@ struct P_xside_scroller
     double P_speed = P_SIDESCROLLER_SPEED;
     double pos = -P_SIDESCROLLER_INF;
     double hsize;
-    std::function<void(brush *brush, P_xside_scroller *cmp)> on_render;
+    std::function<void(std::shared_ptr<brush> brush, P_xside_scroller *cmp)> on_render;
 
     void set_speed(double spd);
     void set_inflation(double otl);
@@ -82,7 +82,7 @@ struct P_xside_scroller
     void to_ground();
     void P_clamp();
     void tick();
-    void render(brush *brush);
+    void render(std::shared_ptr<brush> brush);
 };
 
 enum class button_state
@@ -94,13 +94,13 @@ enum class button_state
 
 struct gui_button : gui_component
 {
-    std::function<void(brush *brush, gui_button *cmp)> on_render;
+    std::function<void(std::shared_ptr<brush> brush, gui_button *cmp)> on_render;
     std::function<void()> on_click;
     std::function<void()> on_right_click;
     bool enable_switching = false;
     button_state state = button_state::IDLE;
 
-    void render(brush *brush) override;
+    void render(std::shared_ptr<brush> brush) override;
     void tick() override;
 };
 
@@ -112,13 +112,13 @@ struct gui_text_view : gui_component
     watch cursor_shiner = watch(P_CURSOR_SHINE_INTERVAL, 0.5);
     // the background renderer.
     // the text renderer cannot be customized.
-    std::function<void(brush *brush, gui_text_view *cmp)> on_render;
+    std::function<void(std::shared_ptr<brush> brush, gui_text_view *cmp)> on_render;
     bool all_selecting;
     int pointer;
-    shared<font> font;
+    std::shared_ptr<font> font;
 
-    void render(brush *brush) override;
+    void render(std::shared_ptr<brush> brush) override;
     void tick() override;
 };
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

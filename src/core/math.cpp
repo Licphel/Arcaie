@@ -1,7 +1,7 @@
-#include "math.h"
 #include <core/math.h>
+#include <cmath>
 
-namespace arcaie
+namespace arc
 {
 
 vec2::vec2() = default;
@@ -375,4 +375,4 @@ double quad::area() const
     return width * height;
 }
 
-} // namespace arcaie
+} // namespace arc

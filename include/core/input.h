@@ -1,11 +1,12 @@
 #pragma once
-#include <core/math.h>
-#include <core/key.h>
 #include <core/def.h>
+#include <core/key.h>
+#include <core/math.h>
+#include <string>
 
 // this header is a single wrapper of #gfx/device.h
 // it prevents native libraries from leaking into your codes.
-namespace arcaie
+namespace arc
 {
 
 bool key_held(int key, int mod = ARC_MOD_ANY);
@@ -22,4 +23,4 @@ std::string consume_chars();
 std::string consume_clipboard_text();
 void set_clipboard_text(const std::string &str);
 
-}
+} // namespace arc

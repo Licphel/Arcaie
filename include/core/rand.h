@@ -1,14 +1,14 @@
 #pragma once
 #include <core/def.h>
-#include <core/bin.h>
+#include <core/buffer.h>
 
-namespace arcaie
+namespace arc
 {
 
 struct random
 {
     struct P_impl;
-    unique<P_impl> P_pimpl;
+    std::unique_ptr<P_impl> P_pimpl;
 
     random();
     ~random();
@@ -29,24 +29,24 @@ struct random
     void write(byte_buf &buf);
     void read(byte_buf &buf);
 
-    shared<random> copy();
-    shared<random> copy(int seed_addon);
-};
+    std::shared_ptr<random> copy();
+    std::shared_ptr<random> copy(int seed_addon);
 
-// get a global random generator, when we don't care the seed.
-shared<random> get_grand();
-// make a new random generator, with a random seed or a specific seed.
-shared<random> make_random();
-shared<random> make_random(long seed);
+    // get a global random generator, when we don't care the seed.
+    static std::shared_ptr<random> G;
+    // make a new random generator, with a random seed or a specific seed.
+    static std::shared_ptr<random> make();
+    static std::shared_ptr<random> make(long seed);
+};
 
 struct noise
 {
     long seed;
     virtual ~noise() = default;
     virtual double generate(double x, double y, double z) = 0;
+
+    static std::shared_ptr<noise> make_perlin(long seed);
+    static std::shared_ptr<noise> make_voronoi(long seed);
 };
 
-shared<noise> make_perlin(long seed);
-shared<noise> make_voronoi(long seed);
-
-} // namespace arcaie
+} // namespace arc

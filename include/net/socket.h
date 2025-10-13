@@ -1,8 +1,9 @@
 #pragma once
 #include <net/packet.h>
+#include <string>
 #include <core/uuid.h>
 
-namespace arcaie::net
+namespace arc::net
 {
 
 enum class connection_type
@@ -19,12 +20,15 @@ enum class connection_type
 // a socket can be either a server or a remote socket.
 struct socket : packet_context
 {
+    struct P_impl;
+    std::unique_ptr<P_impl> P_pimpl;
+
     socket();
     ~socket();
 
     // remote starts
     void connect(connection_type type, const std::string &host = "", uint16_t port = 0);
-    void send_to_server(shared<packet> pkt);
+    void send_to_server(std::shared_ptr<packet> pkt);
     void disconnect();
     // discover lan server, and connect to it.
     void discover();
@@ -32,22 +36,20 @@ struct socket : packet_context
     // server starts
     void start(uint16_t port = 0);
     void stop();
-    void send_to_remote(const uuid &remote_id, shared<packet> pkt);
-    void send_to_remotes(shared<packet> pkt);
+    void send_to_remote(const uuid &remote_id, std::shared_ptr<packet> pkt);
+    void send_to_remotes(std::shared_ptr<packet> pkt);
 
     // process packets. this should be called in the main thread.
     void tick();
     void hold_alive(const uuid &id);
 
-    struct P_impl;
-    unique<P_impl> P_pimpl;
+    static socket &server();
+    static socket &remote();
 };
 
 // get an assigned tcp port
-uint16_t get_available_tcp_port();
+uint16_t P_gen_tcp_port();
 // get an assigned tcp port
-uint16_t get_available_udp_port();
-socket &get_gsocket_server();
-socket &get_gsocket_remote();
+uint16_t P_gen_udp_port();
 
-} // namespace arcaie::net
+} // namespace arc::net

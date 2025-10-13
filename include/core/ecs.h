@@ -1,20 +1,16 @@
 #pragma once
-#include <bitset>
-#include <core/buffer.h>
+#include <core/def.h>
 #include <core/log.h>
-#include <core/uuid.h>
-#include <functional>
-#include <lua/lua.h>
-#include <memory>
-#include <sol/sol.hpp>
-#include <string>
 #include <unordered_map>
 #include <vector>
+#include <core/uuid.h>
+#include <core/buffer.h>
+#include <functional>
 
-namespace arcaie
+namespace arc
 {
 
-using entity_ref = arcaie::uuid;
+using entity_ref = uuid;
 
 enum class ecs_component_sync_mode : byte
 {
@@ -32,20 +28,20 @@ struct ecs_pool_terased
     virtual void add_raw(const entity_ref &e, const void *src) = 0;
     virtual void *get_raw(const entity_ref &e) = 0;
     virtual void remove(const entity_ref &e) = 0;
-    virtual void write(const entity_ref &e, arcaie::byte_buf &) = 0;
-    virtual void read(const entity_ref &e, arcaie::byte_buf &) = 0;
+    virtual void write(const entity_ref &e, byte_buf &) = 0;
+    virtual void read(const entity_ref &e, byte_buf &) = 0;
 };
 
 template <typename T> struct ecs_pool : ecs_pool_terased
 {
-    struct slot
+    struct P_slot
     {
         T data{};
         bool alive = false;
         size_t idx = 0;
     };
 
-    std::unordered_map<entity_ref, slot> sparse;
+    std::unordered_map<entity_ref, P_slot> sparse;
     std::vector<entity_ref> dense;
     std::vector<T> data;
 
@@ -100,13 +96,13 @@ template <typename T> struct ecs_pool : ecs_pool_terased
             f(dense[i], data[i]);
     }
 
-    void write(const entity_ref &e, arcaie::byte_buf &buf) override
+    void write(const entity_ref &e, arc::byte_buf &buf) override
     {
         if (T *p = get(e))
             p->write(buf);
     }
 
-    void read(const entity_ref &e, arcaie::byte_buf &buf) override
+    void read(const entity_ref &e, arc::byte_buf &buf) override
     {
         if (T *p = get(e))
             p->read(buf);
@@ -133,7 +129,7 @@ enum class ecs_phase : byte
 };
 
 /*
-an accepted ecs component is like:
+an acceptable ecs component is like:
 
 struct position
 {
@@ -147,4 +143,4 @@ struct position
 };
 */
 
-} // namespace arcaie
+} // namespace arc

@@ -3,11 +3,13 @@
 #include <gfx/device.h>
 #include <gfx/font.h>
 #include <gfx/image.h>
+#include <core/io.h>
+#include <core/id.h>
 
-using namespace arcaie::gfx;
-using namespace arcaie::audio;
+using namespace arc::gfx;
+using namespace arc::audio;
 
-namespace arcaie
+namespace arc
 {
 
 std::unordered_map<unique_id, std::any> P_resource_map;
@@ -36,7 +38,7 @@ void asset_loader::scan(const path_handle &path_root)
     }
 }
 
-void asset_loader::add_sub(shared<asset_loader> subloader)
+void asset_loader::add_sub(std::shared_ptr<asset_loader> subloader)
 {
     subloaders.push_back(subloader);
     P_total_tcount += subloader->P_total_tcount;
@@ -102,39 +104,39 @@ asset_loader::~asset_loader()
     free();
 }
 
-shared<asset_loader> make_loader(const std::string &scope, const path_handle &root)
+std::shared_ptr<asset_loader> asset_loader::make(const std::string &scope, const path_handle &root)
 {
-    shared<asset_loader> lptr = std::make_shared<asset_loader>();
+    std::shared_ptr<asset_loader> lptr = std::make_shared<asset_loader>();
     lptr->scope = scope;
     lptr->root = root;
     return lptr;
 }
 
-void make_loader_equipment(shared<asset_loader> loader, asset_loader_equip equipment)
+void asset_loader::add_equipment(asset_loader_equip equipment)
 {
     switch (equipment)
     {
     case asset_loader_equip::PNG_AS_TEXTURE:
-        loader->process_strategy_map[".png"] = [](const path_handle &path, const unique_id &id) {
-            shared<image> img = load_image(path);
-            shared<texture> tex = make_texture(img);
+        process_strategy_map[".png"] = [](const path_handle &path, const unique_id &id) {
+            std::shared_ptr<image> img = image::load(path);
+            std::shared_ptr<texture> tex = texture::make(img);
             P_resource_map[id] = std::any(tex);
         };
         break;
     case asset_loader_equip::PNG_AS_IMAGE:
-        loader->process_strategy_map[".png"] = [](const path_handle &path, const unique_id &id) {
-            shared<image>img = load_image(path);
+        process_strategy_map[".png"] = [](const path_handle &path, const unique_id &id) {
+            std::shared_ptr<image> img = image::load(path);
             P_resource_map[id] = std::any(img);
         };
         break;
     case asset_loader_equip::TXT:
-        loader->process_strategy_map[".txt"] = [](const path_handle &path, const unique_id &id) {
+        process_strategy_map[".txt"] = [](const path_handle &path, const unique_id &id) {
             P_resource_map[id] = std::any(io_read_str(path));
         };
         break;
     case asset_loader_equip::WAVE:
-        loader->process_strategy_map[".wav"] = [](const path_handle &path, const unique_id &id) {
-            shared<track> track = load_track(path);
+        process_strategy_map[".wav"] = [](const path_handle &path, const unique_id &id) {
+            std::shared_ptr<track> track = track::load(path);
             P_resource_map[id] = std::any(track);
         };
         break;
@@ -146,4 +148,4 @@ void make_loader_equipment(shared<asset_loader> loader, asset_loader_equip equip
     }
 }
 
-} // namespace arcaie
+} // namespace arc

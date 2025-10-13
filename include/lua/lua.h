@@ -7,7 +7,7 @@
 #include <core/log.h>
 #include <sol/sol.hpp>
 
-namespace arcaie::lua
+namespace arc::lua
 {
 
 #define P_TYPE_OP_C(type, returnType, withType, op)                                                                    \
@@ -52,7 +52,7 @@ template <typename... Args> lua_object lua_protected_call(const lua_function &fu
         return result;
 
     sol::error err = result;
-    arcthrow(ARC_FATAL, err.what());
+    print_throw(ARC_FATAL, err.what());
     return result;
 }
 
@@ -79,4 +79,4 @@ template <typename T> lua_table lua_vector(const std::vector<T> vec)
     return sol::as_table(vec);
 }
 
-} // namespace arcaie::lua
+} // namespace arc::lua

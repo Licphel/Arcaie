@@ -1,11 +1,11 @@
 #pragma once
-#include <core/io.h>
-#include <core/math.h>
+#include <core/def.h>
 #include <functional>
 #include <gfx/color.h>
-#include <string>
+#include <core/math.h>
+#include <core/io.h>
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 enum class shader_vertex_data_type
@@ -41,10 +41,16 @@ struct shader_uniform
     void set(const transform &v);
 };
 
+enum class builtin_program_type
+{
+    TEXTURED,
+    COLORED
+};
+
 struct program
 {
     /* unstable */ unsigned int P_program_id = 0;
-    std::function<void(shared<program> program)> callback_setup;
+    std::function<void(std::shared_ptr<program> program)> callback_setup;
     /* unstable */ bool P_has_setup = false;
     std::vector<shader_uniform> cached_uniforms;
 
@@ -53,16 +59,10 @@ struct program
     shader_attrib get_attrib(int index);
     shader_uniform get_uniform(const std::string &name);
     shader_uniform cache_uniform(const std::string &name);
+
+    static std::shared_ptr<program> make(const std::string &vert, const std::string &frag,
+                                         std::function<void(std::shared_ptr<program> program)> callback_setup);
+    static std::shared_ptr<program> make(builtin_program_type type);
 };
 
-enum class builtin_shader_type
-{
-    TEXTURED,
-    COLORED
-};
-
-shared<program> make_program(const std::string &vert, const std::string &frag,
-                             std::function<void(shared<program> program)> callback_setup);
-shared<program> make_program(builtin_shader_type type);
-
-} // namespace arcaie::gfx
+} // namespace arc::gfx

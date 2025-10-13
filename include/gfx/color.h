@@ -1,9 +1,7 @@
 #pragma once
-#include <algorithm>
-#include <iostream>
 #include <core/def.h>
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 struct color
@@ -54,4 +52,4 @@ struct color
     color operator/(double s) const;
 };
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

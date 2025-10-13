@@ -8,9 +8,9 @@
 #include <gfx/mesh.h>
 #include <lua/lua.h>
 
-using namespace arcaie::gfx;
+using namespace arc::gfx;
 
-namespace arcaie::lua
+namespace arc::lua
 {
 
 void lua_bind_gfx(lua_state &lua)
@@ -19,15 +19,17 @@ void lua_bind_gfx(lua_state &lua)
 
     // brush
     auto brush_type = lua_new_usertype<brush>(_n, "brush", lua_native);
-    brush_type["draw_texture"] = lua_combine(
-        [](brush *self, shared<texture> tex, const quad &dst, const quad &src, bitmask<brush_flag> flag) {
-            self->draw_texture(tex, dst, src, flag);
-        },
-        [](brush *self, shared<texture> tex, const quad &dst, const quad &src) { self->draw_texture(tex, dst, src); },
-        [](brush *self, shared<texture> tex, const quad &dst, bitmask<brush_flag> flag) {
-            self->draw_texture(tex, dst, flag);
-        },
-        [](brush *self, shared<texture> tex, const quad &dst) { self->draw_texture(tex, dst); });
+    brush_type["draw_texture"] =
+        lua_combine([](std::shared_ptr<brush> self, std::shared_ptr<texture> tex, const quad &dst, const quad &src,
+                       long flag) { self->draw_texture(tex, dst, src, flag); },
+                    [](std::shared_ptr<brush> self, std::shared_ptr<texture> tex, const quad &dst, const quad &src) {
+                        self->draw_texture(tex, dst, src);
+                    },
+                    [](std::shared_ptr<brush> self, std::shared_ptr<texture> tex, const quad &dst,
+                       long flag) { self->draw_texture(tex, dst, flag); },
+                    [](std::shared_ptr<brush> self, std::shared_ptr<texture> tex, const quad &dst) {
+                        self->draw_texture(tex, dst);
+                    });
     brush_type["draw_rect"] = &brush::draw_rect;
     brush_type["draw_oval"] = &brush::draw_oval;
     brush_type["draw_rect_outline"] = &brush::draw_rect_outline;
@@ -77,7 +79,7 @@ void lua_bind_gfx(lua_state &lua)
     img_type["width"] = &image::width;
     img_type["height"] = &image::height;
     img_type["P_is_from_stb"] = &image::P_is_from_stb;
-    _n["load_image"] = &load_image;
+    img_type["load"] = &image::load;
 
     // texture
     auto tex_type = lua_new_usertype<texture>(_n, "texture", lua_native);
@@ -91,7 +93,8 @@ void lua_bind_gfx(lua_state &lua)
     tex_type["u"] = &texture::u;
     tex_type["v"] = &texture::v;
     tex_type["root"] = &texture::root;
-    _n["make_texture"] = &make_texture;
+    tex_type["make"] = &texture::make;
+    tex_type["cut"] = &texture::cut;
 
     // camera
     auto cam_type = lua_new_usertype<camera>(_n, "camera", lua_constructors<camera()>());
@@ -110,11 +113,34 @@ void lua_bind_gfx(lua_state &lua)
     cam_type["unproject_x"] = &camera::unproject_x;
     cam_type["project_y"] = &camera::project_y;
     cam_type["unproject_y"] = &camera::unproject_y;
-    _n["get_absolute_camera"] = &get_absolute_camera;
-    _n["get_gui_camera"] = &get_gui_camera;
-    _n["get_world_camera"] = &get_world_camera;
+    _n["normal"] = &camera::normal;
+    _n["gui"] = &camera::gui;
+    _n["world"] = &camera::world;
+
+    auto fnt_type = lua_new_usertype<font>(_n, "font", lua_native);
+    fnt_type["height"] = &font::height;
+    fnt_type["lspc"] = &font::lspc;
+    fnt_type["make_vtx"] = lua_combine(
+        [](font &self, std::shared_ptr<brush> brush, const std::string &u8_str, double x, double y,
+           long align, double max_w,
+           double scale) { return self.make_vtx(brush, u8_str, x, y, align, max_w, scale); },
+        [](font &self, std::shared_ptr<brush> brush, const std::string &u8_str, double x, double y,
+           long align, double max_w) { return self.make_vtx(brush, u8_str, x, y, align, max_w); },
+        [](font &self, std::shared_ptr<brush> brush, const std::string &u8_str, double x, double y,
+           long align) { return self.make_vtx(brush, u8_str, x, y, align); },
+        [](font &self, std::shared_ptr<brush> brush, const std::string &u8_str, double x, double y) {
+            return self.make_vtx(brush, u8_str, x, y);
+        });
+
+    auto fnt_align = lua_make_table();
+    fnt_align["LEFT"] = font_align::LEFT;
+    fnt_align["RIGHT"] = font_align::RIGHT;
+    fnt_align["UP"] = font_align::UP;
+    fnt_align["DOWN"] = font_align::DOWN;
+    fnt_align["H_CENTER"] = font_align::H_CENTER;
+    fnt_align["V_CENTER"] = font_align::V_CENTER;
 
     lua["arc"]["gfx"] = _n;
 }
 
-} // namespace arcaie::lua
+} // namespace arc::lua

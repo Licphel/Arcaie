@@ -1,13 +1,9 @@
 #pragma once
-#include <iostream>
-#include <fmt/core.h>
-#include <string>
-#include <stdexcept>
 #include <core/def.h>
-#include <vector>
-#include <mutex>
+#include <fmt/core.h>
+#include <iostream>
 
-namespace arcaie
+namespace arc
 {
 
 enum log_type
@@ -20,10 +16,10 @@ enum log_type
 
 static std::mutex P_log_mutex;
 
-void log_redirect(const std::string& logv);
+void log_redirect(const std::string &logv);
 std::string P_get_header(log_type type);
 
-template <typename... Args> void arclog(log_type type, const std::string &fmt, Args &&...args)
+template <typename... Args> void print(log_type type, const std::string &fmt, Args &&...args)
 {
     std::lock_guard<std::mutex> lock(P_log_mutex);
     std::string formatted = P_get_header(type) + fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
@@ -32,7 +28,7 @@ template <typename... Args> void arclog(log_type type, const std::string &fmt, A
     log_redirect(formatted);
 }
 
-template <typename... Args> [[noreturn]] void arcthrow(log_type type, const std::string &fmt, Args &&...args)
+template <typename... Args> [[noreturn]] void print_throw(log_type type, const std::string &fmt, Args &&...args)
 {
     std::lock_guard<std::mutex> lock(P_log_mutex);
     std::string formatted = P_get_header(type) + fmt::format(fmt::runtime(fmt), std::forward<Args>(args)...);
@@ -42,4 +38,4 @@ template <typename... Args> [[noreturn]] void arcthrow(log_type type, const std:
     throw std::runtime_error(formatted);
 }
 
-} // namespace arcaie
+} // namespace arc

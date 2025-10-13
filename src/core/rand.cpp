@@ -1,7 +1,8 @@
 #include <core/rand.h>
+#include <core/buffer.h>
 #include <random>
 
-namespace arcaie
+namespace arc
 {
 
 struct random::P_impl
@@ -76,34 +77,29 @@ void random::read(byte_buf &buf)
     P_pimpl->b = buf.read<long>();
 }
 
-shared<random> random::copy()
+std::shared_ptr<random> random::copy()
 {
     return copy(0);
 }
 
-shared<random> random::copy(int seed_addon)
+std::shared_ptr<random> random::copy(int seed_addon)
 {
-    auto ptr = std::make_shared<random>();
+    auto ptr = make();
     ptr->P_pimpl->a = P_pimpl->a + seed_addon;
     ptr->P_pimpl->b = P_pimpl->b - seed_addon;
     return ptr;
 }
 
-shared<random> P_grand = make_random();
+std::shared_ptr<random> random::G = make();
 
-shared<random> get_grand()
-{
-    return P_grand;
-}
-
-shared<random> make_random()
+std::shared_ptr<random> random::make()
 {
     thread_local static std::mt19937_64 rng{std::random_device{}()};
     std::uniform_int_distribution<int> dist(0, INT_MAX);
-    return make_random(dist(rng));
+    return make(dist(rng));
 }
 
-shared<random> make_random(long seed)
+std::shared_ptr<random> random::make(long seed)
 {
     auto ptr = std::make_shared<random>();
     ptr->set_seed(seed);
@@ -116,7 +112,7 @@ struct P_noise_perlin : noise
 
     void init()
     {
-        auto rd = make_random(seed);
+        auto rd = random::make(seed);
 
         int perm[256];
         for (int i = 0; i < 256; i++)
@@ -263,7 +259,7 @@ struct P_noise_voronoi : noise
     }
 };
 
-shared<noise> make_perlin(long seed)
+std::shared_ptr<noise> noise::make_perlin(long seed)
 {
     auto ptr = std::make_shared<P_noise_perlin>();
     ptr->seed = seed;
@@ -271,11 +267,11 @@ shared<noise> make_perlin(long seed)
     return ptr;
 }
 
-shared<noise> make_voronoi(long seed)
+std::shared_ptr<noise> noise::make_voronoi(long seed)
 {
     auto ptr = std::make_shared<P_noise_voronoi>();
     ptr->seed = seed;
     return ptr;
 }
 
-} // namespace arcaie
+} // namespace arc

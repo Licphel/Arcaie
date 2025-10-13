@@ -1,11 +1,7 @@
 #pragma once
-#include <gfx/color.h>
 #include <core/math.h>
-#include <core/math.h>
-#include <core/math.h>
-#include <memory>
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 struct camera
@@ -32,17 +28,17 @@ struct camera
     double project_y(double y);
     double unproject_x(double x);
     double unproject_y(double y);
+
+    // returns a camera that maps 1:1 to the screen pixels.
+    static camera &normal();
+    // returns a fixed-size camera whose view is [800, 450] (16:9).
+    // this keeps the layout consistent on different screen sizes.
+    // #only_int makes the scaling factor an integer, useful for pixel aligning.
+    // #fixed_resolution, if positive, forbids auto-scaling.
+    static camera &gui(bool only_int = false, double fixed_resolution = -1);
+    // returns a camera looking at a world position, with a given horizontal sight range.
+    // vertical sight range is unsure, because the ratio varies from device to device.
+    static camera &world(vec2 center, double sight_horizontal);
 };
 
-// returns a camera that maps 1:1 to the screen pixels.
-camera &get_absolute_camera();
-// returns a fixed-size camera whose view is [800, 450] (16:9).
-// this keeps the layout consistent on different screen sizes.
-// #only_int makes the scaling factor an integer, useful for pixel aligning.
-// #fixed_resolution, if positive, forbids auto-scaling.
-camera &get_gui_camera(bool only_int = false, double fixed_resolution = -1);
-// returns a camera looking at a world position, with a given horizontal sight range.
-// vertical sight range is unsure, because the ratio varies from device to device.
-camera &get_world_camera(vec2 center, double sight_horizontal);
-
-} // namespace arcaie::gfx
+} // namespace arc::gfx

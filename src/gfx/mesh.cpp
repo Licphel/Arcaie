@@ -1,17 +1,19 @@
 #include <gfx/mesh.h>
+#include <gfx/buffer.h>
+#include <gfx/brush.h>
 
 // clang-format off
 #include <gl/glew.h>
 #include <gl/gl.h>
 // clang-format on
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 mesh::mesh()
 {
-    buffer = make_buffer();
-    P_brush = make_brush(buffer);
+    buffer = complex_buffer::make();
+    P_brush = buffer->derive_brush();
     P_brush->P_mesh_root = this;
 }
 
@@ -22,12 +24,12 @@ mesh::~mesh()
     glDeleteBuffers(1, &P_ebo);
 }
 
-brush *mesh::retry()
+std::shared_ptr<brush> mesh::retry()
 {
     buffer->clear();
     if (!P_is_direct)
         P_brush->P_is_in_mesh = true;
-    return P_brush.get();
+    return P_brush;
 }
 
 void mesh::record()
@@ -37,14 +39,14 @@ void mesh::record()
         P_brush->P_is_in_mesh = false;
 }
 
-void mesh::draw(brush *gbrush)
+void mesh::draw(std::shared_ptr<brush> gbrush)
 {
     auto old_state = gbrush->P_state;
     auto old_buf = gbrush->wbuf;
     auto old_msh = gbrush->P_mesh_root;
 
     gbrush->use_state(state);
-    gbrush->wbuf = buffer;
+    gbrush->wbuf = buffer.get();
     gbrush->P_mesh_root = this;
     gbrush->P_clear_when_flush = false;
 
@@ -56,10 +58,10 @@ void mesh::draw(brush *gbrush)
     gbrush->use_state(old_state);
 }
 
-shared<mesh> make_mesh()
+std::shared_ptr<mesh> mesh::make()
 {
-    shared<mesh> msh = std::make_unique<mesh>();
-    shared<complex_buffer> buf = msh->buffer;
+    std::shared_ptr<mesh> msh = std::make_shared<mesh>();
+    std::shared_ptr<complex_buffer> buf = msh->buffer;
 
     unsigned int vao, vbo, ebo;
     glGenVertexArrays(1, &vao);
@@ -72,4 +74,4 @@ shared<mesh> make_mesh()
     return msh;
 }
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

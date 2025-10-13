@@ -1,12 +1,7 @@
-#include <gfx/cbuf.h>
-#include <memory>
+#include <gfx/brush.h>
+#include <gfx/buffer.h>
 
-// clang-format off
-#include <gl/glew.h>
-#include <gl/gl.h>
-// clang-format on
-
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 void complex_buffer::end_quad()
@@ -51,9 +46,16 @@ void complex_buffer::clear()
     dirty = true;
 }
 
-shared<complex_buffer> make_buffer()
+std::shared_ptr<brush> complex_buffer::derive_brush()
+{
+    std::shared_ptr<brush> brush_ptr = std::make_shared<brush>();
+    brush_ptr->wbuf = this;
+    return brush_ptr;
+}
+
+std::shared_ptr<complex_buffer> complex_buffer::make()
 {
     return std::make_shared<complex_buffer>();
 }
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

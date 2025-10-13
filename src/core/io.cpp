@@ -1,13 +1,12 @@
 #include <core/io.h>
 #include <core/log.h>
 #include <fstream>
-#include <iostream>
 
 #define BROTLI_IMPLEMENTATION
 #include <brotli/decode.h>
 #include <brotli/encode.h>
 
-namespace arcaie
+namespace arc
 {
 
 path_handle::path_handle() = default;
@@ -140,7 +139,7 @@ static std::vector<byte> brotli_compress(const std::vector<byte> &src, int quali
     size_t encoded_sz = max_sz;
     if (BROTLI_TRUE != BrotliEncoderCompress(quality, BROTLI_DEFAULT_WINDOW, BROTLI_DEFAULT_MODE, src.size(),
                                              src.data(), &encoded_sz, out.data()))
-        arcthrow(ARC_FATAL, "Brotli encoder failed");
+        print_throw(ARC_FATAL, "Brotli encoder failed");
     out.resize(encoded_sz);
     return out;
 }
@@ -154,7 +153,7 @@ static std::vector<byte> brotli_decompress(const std::vector<byte> &src)
     const byte *nxt_in = src.data();
     BrotliDecoderState *st = BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
     if (!st)
-        arcthrow(ARC_FATAL, "brotli decoder create failed");
+        print_throw(ARC_FATAL, "brotli decoder create failed");
 
     for (;;)
     {
@@ -168,7 +167,7 @@ static std::vector<byte> brotli_decompress(const std::vector<byte> &src)
         if (rc == BROTLI_DECODER_RESULT_SUCCESS)
             break;
         if (rc == BROTLI_DECODER_RESULT_ERROR)
-            arcthrow(ARC_FATAL, "brotli decoder error");
+            print_throw(ARC_FATAL, "brotli decoder error");
     }
     BrotliDecoderDestroyInstance(st);
     return dst;
@@ -178,13 +177,13 @@ std::vector<byte> io_read_bytes(const path_handle &path, io_compression_level cl
 {
     std::ifstream file(path.P_npath, std::ios::binary | std::ios::ate);
     if (!file)
-        arcthrow(ARC_FATAL, "cannot find {}", path.abs_path);
+        print_throw(ARC_FATAL, "cannot find {}", path.abs_path);
     size_t len = file.tellg();
     file.seekg(0, std::ios::beg);
     std::vector<byte> raw(len);
     file.read(reinterpret_cast<char *>(raw.data()), len);
     if (!file)
-        arcthrow(ARC_FATAL, "short read in {}", path.abs_path);
+        print_throw(ARC_FATAL, "short read in {}", path.abs_path);
 
     if (clvl == io_compression_level::RAW_READ)
         return raw;
@@ -199,7 +198,7 @@ void io_write_bytes(const path_handle &path, const std::vector<byte> &data, io_c
     auto out = io_compress(data, clvl);
     std::ofstream file(path.P_npath, std::ios::binary);
     if (!file)
-        arcthrow(ARC_FATAL, "cannot open {} for write", path.abs_path);
+        print_throw(ARC_FATAL, "cannot open {} for write", path.abs_path);
     file.write(reinterpret_cast<const char *>(out.data()), out.size());
 }
 
@@ -233,7 +232,7 @@ std::vector<byte> io_compress(std::vector<byte> buf, io_compression_level clvl)
         out = brotli_compress(buf, 11);
         break;
     default:
-        arcthrow(ARC_FATAL, "unsupported compression level {}", (int)clvl);
+        print_throw(ARC_FATAL, "unsupported compression level {}", (int)clvl);
     }
     return out;
 }
@@ -243,4 +242,4 @@ std::vector<byte> io_decompress(std::vector<byte> buf)
     return brotli_decompress(buf);
 }
 
-} // namespace arcaie
+} // namespace arc

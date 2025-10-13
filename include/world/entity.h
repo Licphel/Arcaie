@@ -1,8 +1,8 @@
 #pragma once
-#include <core/uuid.h>
 #include <core/math.h>
+#include <core/uuid.h>
 
-namespace arcaie::world
+namespace arc::world
 {
 
 struct P_component_motion
@@ -20,7 +20,7 @@ struct level;
 struct entity
 {
     uuid uuid;
-    level* level;
-}; 
+    level *level;
+};
 
-}
+} // namespace arc::world

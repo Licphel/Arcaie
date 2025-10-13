@@ -1,8 +1,11 @@
 #pragma once
+#include <core/def.h>
 #include <core/ecs.h>
 #include <core/math.h>
+#include <functional>
+#include <core/uuid.h>
 
-namespace arcaie::world
+namespace arc::world
 {
 
 struct P_ecs_motion
@@ -15,12 +18,12 @@ struct level
 {
     using P_sysfn = std::function<void(level &)>;
 
-    std::unordered_map<std::string, shared<ecs_pool_terased>> P_ecs_pools;
+    std::unordered_map<std::string, std::shared_ptr<ecs_pool_terased>> P_ecs_pools;
     std::vector<P_sysfn> P_ecs_syses[ECS_PHASE_COUNT];
 
     entity_ref make_entity()
     {
-        entity_ref ref = uuid_generate();
+        entity_ref ref = uuid::make();
         return ref;
     }
 
@@ -82,4 +85,4 @@ struct level
     }
 };
 
-} // namespace arcaie::world
+} // namespace arc::world

@@ -1,6 +1,6 @@
 #include <gfx/color.h>
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 color color::from_bytes(byte r, byte g, byte b, byte a)
@@ -31,4 +31,4 @@ color color::operator/(double s) const
     return color(r / s, g / s, b / s, a);
 }
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

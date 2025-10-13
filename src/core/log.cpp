@@ -1,14 +1,13 @@
-#include <core/log.h>
-#include <vector>
-#include <fstream>
 #include <core/io.h>
+#include <core/log.h>
+#include <fstream>
 
-namespace arcaie
+namespace arc
 {
 
 static std::ofstream P_logstream = std::ofstream(io_open_local("latest.log").P_npath);
 
-void log_redirect(const std::string& logv)
+void log_redirect(const std::string &logv)
 {
     P_logstream << logv << std::endl;
     P_logstream << std::flush;
@@ -35,4 +34,4 @@ std::string P_get_header(log_type type)
     return header;
 }
 
-} // namespace arcaie
+} // namespace arc

@@ -4,7 +4,7 @@
 #include <core/io.h>
 #include <lua/lua.h>
 
-namespace arcaie::lua
+namespace arc::lua
 {
 
 void lua_bind_tcodec(lua_state &lua)
@@ -14,4 +14,4 @@ void lua_bind_tcodec(lua_state &lua)
     lua["arc"]["codec"] = _n;
 }
 
-} // namespace arcaie::lua
+} // namespace arc::lua

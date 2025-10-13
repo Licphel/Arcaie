@@ -1,7 +1,7 @@
 #include <core/time.h>
 #include <gfx/device.h>
 
-namespace arcaie
+namespace arc
 {
 
 watch::watch(double interval) : interval(interval), accp(0.0)
@@ -35,4 +35,4 @@ double lerp(double old, double now)
     return old + P_clock.partial * (now - old);
 }
 
-} // namespace arcaie
+} // namespace arc

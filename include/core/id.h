@@ -1,10 +1,10 @@
 #pragma once
-#include <string>
-#include <functional>
 #include <core/def.h>
 #include <core/io.h>
+#include <string>
+#include <core/io.h>
 
-namespace arcaie
+namespace arc
 {
 
 struct unique_id
@@ -26,14 +26,14 @@ struct unique_id
     bool operator<(const unique_id &other) const;
 };
 
-} // namespace arcaie
+} // namespace arc
 
 namespace std
 {
 
-template <> struct hash<arcaie::unique_id>
+template <> struct hash<arc::unique_id>
 {
-    std::size_t operator()(const arcaie::unique_id &id) const noexcept
+    std::size_t operator()(const arc::unique_id &id) const noexcept
     {
         return id.P_hash;
     }

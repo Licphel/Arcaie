@@ -2,7 +2,7 @@
 #include <core/time.h>
 #include <gfx/device.h>
 
-namespace arcaie
+namespace arc
 {
 
 bool key_held(int key, int mod)
@@ -50,4 +50,4 @@ void set_clipboard_text(const std::string &str)
     gfx::P_tk_set_clipboard_text(str);
 }
 
-} // namespace arcaie
+} // namespace arc

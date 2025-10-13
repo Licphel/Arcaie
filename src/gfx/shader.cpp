@@ -1,15 +1,15 @@
 #include <core/def.h>
 #include <core/log.h>
-#include <functional>
 #include <gfx/shader.h>
-#include <memory>
+#include <core/math.h>
+#include <gfx/color.h>
 
 // clang-format off
 #include <gl/glew.h>
 #include <gl/gl.h>
 // clang-format on
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 shader_attrib::shader_attrib(unsigned int id) : P_attrib_id(id)
@@ -114,7 +114,7 @@ static int P_build_shader_part(std::string source, GLenum type)
     int id = glCreateShader(type);
 
     if (id == 0)
-        arcthrow(ARC_FATAL, "Fail to create shader.");
+        print_throw(ARC_FATAL, "Fail to create shader.");
 
     const char *src = source.c_str();
     GLint len = static_cast<GLint>(source.size());
@@ -129,16 +129,16 @@ static int P_build_shader_part(std::string source, GLenum type)
         char log[512];
         glGetShaderInfoLog(id, sizeof(log), nullptr, log);
         glDeleteShader(id);
-        arcthrow(ARC_FATAL, "glsl compile error: {}", std::string(log));
+        print_throw(ARC_FATAL, "glsl compile error: {}", std::string(log));
     }
 
     return id;
 }
 
-shared<program> make_program(const std::string &vert, const std::string &frag,
-                             std::function<void(shared<program> program)> callback_setup)
+std::shared_ptr<program> program::make(const std::string &vert, const std::string &frag,
+                                       std::function<void(std::shared_ptr<program> program)> callback_setup)
 {
-    shared<program> prog = std::make_shared<program>();
+    std::shared_ptr<program> prog = std::make_shared<program>();
     int id = prog->P_program_id = glCreateProgram();
     int vert_id = P_build_shader_part(vert, GL_VERTEX_SHADER);
     int frag_id = P_build_shader_part(frag, GL_FRAGMENT_SHADER);
@@ -197,13 +197,13 @@ static const std::string P_dfrag_colored = "#version 330 core\n"
                                            "    fragColor = o_color;\n"
                                            "}";
 
-static shared<program> P_builtin_colored = nullptr, P_builtin_textured = nullptr;
+static std::shared_ptr<program> P_builtin_colored = nullptr, P_builtin_textured = nullptr;
 
-shared<program> make_program(builtin_shader_type type)
+std::shared_ptr<program> program::make(builtin_program_type type)
 {
     if (P_builtin_colored == nullptr || P_builtin_textured == nullptr)
     {
-        P_builtin_colored = make_program(P_dvert_colored, P_dfrag_colored, [](shared<program> program) {
+        P_builtin_colored = program::make(P_dvert_colored, P_dfrag_colored, [](std::shared_ptr<program> program) {
             program->get_attrib(0).layout(shader_vertex_data_type::FLOAT, 2, 16, 0);
             program->get_attrib(1).layout(shader_vertex_data_type::HALF_FLOAT, 4, 16, 8);
 
@@ -211,7 +211,7 @@ shared<program> make_program(builtin_shader_type type)
                 return;
             program->cache_uniform("u_proj"); // 0
         });
-        P_builtin_textured = make_program(P_dvert_textured, P_dfrag_textured, [](shared<program> program) {
+        P_builtin_textured = program::make(P_dvert_textured, P_dfrag_textured, [](std::shared_ptr<program> program) {
             program->get_attrib(0).layout(shader_vertex_data_type::FLOAT, 2, 24, 0);
             program->get_attrib(1).layout(shader_vertex_data_type::HALF_FLOAT, 4, 24, 8);
             program->get_attrib(2).layout(shader_vertex_data_type::FLOAT, 2, 24, 16);
@@ -224,12 +224,12 @@ shared<program> make_program(builtin_shader_type type)
     }
     switch (type)
     {
-    case builtin_shader_type::COLORED:
+    case builtin_program_type::COLORED:
         return P_builtin_colored;
-    case builtin_shader_type::TEXTURED:
+    case builtin_program_type::TEXTURED:
         return P_builtin_textured;
     }
     return nullptr;
 }
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

@@ -1,7 +1,7 @@
 #include <core/chcvt.h>
 #include <core/log.h>
 
-namespace arcaie
+namespace arc
 {
 
 void P_cvt_u32(const std::string &u8_str, std::u32string *u32_tmp)
@@ -12,7 +12,7 @@ void P_cvt_u32(const std::string &u8_str, std::u32string *u32_tmp)
 
     auto need = [&](std::ptrdiff_t n) { return std::distance(it, last) >= n; };
     auto cont = [&](unsigned char c) { return (c & 0xC0) == 0x80; };
-    auto log = [&]() { arclog(ARC_WARN, "u8 -> u32 charset converting failed."); };
+    auto log = [&]() { print(ARC_WARN, "u8 -> u32 charset converting failed."); };
 
     while (it != last)
     {
@@ -78,7 +78,7 @@ void P_cvt_u8(const std::u32string &u32_str, std::string *u8_tmp)
     u8_tmp->reserve(u32_str.size() * 4);
 
     auto push = [u8_tmp](unsigned char byte) { u8_tmp->push_back(static_cast<char>(byte)); };
-    auto log = [&]() { arclog(ARC_WARN, "u32 -> u8 charset converting failed."); };
+    auto log = [&]() { print(ARC_WARN, "u32 -> u8 charset converting failed."); };
 
     for (u32_char cp : u32_str)
     {
@@ -112,4 +112,4 @@ void P_cvt_u8(const std::u32string &u32_str, std::string *u8_tmp)
     }
 }
 
-} // namespace arcaie
+} // namespace arc

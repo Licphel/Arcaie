@@ -1,15 +1,17 @@
 #pragma once
 #include <core/def.h>
-#include <string>
-#include <vector>
 #include <core/log.h>
-#include <core/io.h>
-#include <map>
 #include <any>
+#include <vector>
+#include <unordered_map>
+#include <core/io.h>
 #include <core/buffer.h>
 
-namespace arcaie
+namespace arc
 {
+
+struct binary_map;
+struct binary_array;
 
 enum class P_bincvt : byte
 {
@@ -26,9 +28,6 @@ enum class P_bincvt : byte
     BUF,
     MAP_ENDV
 };
-
-struct binary_map;
-struct binary_array;
 
 struct binary_value
 {
@@ -64,7 +63,7 @@ struct binary_value
         else if constexpr (std::is_same_v<byte_buf, decay_t>)
             return {P_bincvt::BUF, std::any(v)};
 
-        arcthrow(ARC_FATAL, "unsupported type.");
+        print_throw(ARC_FATAL, "unsupported type.");
     }
 
     template <typename T> T cast() const
@@ -127,7 +126,7 @@ struct binary_value
             else
                 break;
         default:
-            arcthrow(ARC_FATAL, "not convertible.");
+            print_throw(ARC_FATAL, "not convertible.");
         }
         return T{};
     }
@@ -152,7 +151,7 @@ struct binary_map
         }
     };
 
-    std::map<std::string, binary_value> data;
+    std::unordered_map<std::string, binary_value> data;
 
     size_t size() const
     {
@@ -232,4 +231,4 @@ struct binary_array
     }
 };
 
-} // namespace arcaie
+} // namespace arc

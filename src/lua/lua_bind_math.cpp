@@ -1,7 +1,7 @@
 #include <core/math.h>
 #include <lua/lua.h>
 
-namespace arcaie::lua
+namespace arc::lua
 {
 
 void lua_bind_math(lua_state &lua)
@@ -84,4 +84,4 @@ void lua_bind_math(lua_state &lua)
     lua["arc"]["math"] = _n;
 }
 
-} // namespace arcaie::lua
+} // namespace arc::lua

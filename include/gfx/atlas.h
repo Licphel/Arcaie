@@ -2,19 +2,19 @@
 #include <core/def.h>
 #include <gfx/image.h>
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 struct atlas
 {
+    struct P_impl;
+    std::unique_ptr<P_impl> P_p;
+
     int width;
     int height;
     byte *pixels;
-    shared<image> output_image = nullptr;
-    shared<texture> output_texture = nullptr;
-
-    struct P_impl;
-    unique<P_impl> P_p;
+    std::shared_ptr<image> output_image = nullptr;
+    std::shared_ptr<texture> output_texture = nullptr;
 
     atlas(int w, int h);
     ~atlas();
@@ -22,11 +22,11 @@ struct atlas
     void begin();
     void end();
     // add an image to the atlas, and get its texture.
-    shared<texture> accept(shared<image> image);
+    std::shared_ptr<texture> accept(std::shared_ptr<image> image);
     // write an image to the atlas.
-    void imgcpy(shared<image> image, int dest_x, int dest_y);
+    void imgcpy(std::shared_ptr<image> image, int dest_x, int dest_y);
+
+    static std::shared_ptr<atlas> make(int w, int h);
 };
 
-shared<atlas> make_atlas(int w, int h);
-
-} // namespace arcaie::gfx
+} // namespace arc::gfx

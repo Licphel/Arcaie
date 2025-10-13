@@ -1,10 +1,11 @@
 #include <core/ecs.h>
 #include <lua/lua.h>
 #include <world/level.h>
+#include <core/uuid.h>
 
-using namespace arcaie::world;
+using namespace arc::world;
 
-namespace arcaie::lua
+namespace arc::lua
 {
 
 struct lua_ecs_component
@@ -16,7 +17,7 @@ struct lua_ecs_component
         data = lua_get_gstate().create_table();
     }
 
-    lua_ecs_component(lua_table tbl) : data(tbl)
+    lua_ecs_component(const lua_table& tb) : data(tb)
     {
     }
 
@@ -35,7 +36,7 @@ void lua_bind_ecs(lua_state &lua)
 
     // component
     auto cmp_type = lua_new_usertype<lua_ecs_component>(
-        _n, "component", lua_constructors<lua_ecs_component(), lua_ecs_component(lua_table)>());
+        _n, "P_component", lua_constructors<lua_ecs_component(), lua_ecs_component(lua_table)>());
     cmp_type["data"] = &lua_ecs_component::data;
     cmp_type["write"] = &lua_ecs_component::write;
     cmp_type["read"] = &lua_ecs_component::read;
@@ -76,4 +77,4 @@ void lua_bind_ecs(lua_state &lua)
     lua["arc"]["ecs"] = _n;
 }
 
-} // namespace arcaie::lua
+} // namespace arc::lua

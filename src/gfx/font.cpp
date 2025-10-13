@@ -1,19 +1,22 @@
 #include <core/chcvt.h>
 #include <core/log.h>
-#include <freetype2/ft2build.h>
 #include <gfx/atlas.h>
 #include <gfx/font.h>
-#include <string>
+#include <gfx/image.h>
+#include <gfx/brush.h>
+#include <core/io.h>
+
+#include <freetype2/ft2build.h>
 #include FT_FREETYPE_H
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 struct font::P_impl
 {
     FT_FaceRec_ *face_ptr;
     FT_LibraryRec_ *lib_ptr;
-    std::map<int, shared<atlas>> codemap;
+    std::unordered_map<int, std::shared_ptr<atlas>> codemap;
     double res, pix;
 };
 
@@ -27,13 +30,13 @@ font::~font()
     FT_Done_FreeType(P_pimpl->lib_ptr);
 }
 
-shared<texture> P_flush_codemap(font::P_impl *P_p, u32_char ch, shared<image> img)
+std::shared_ptr<texture> P_flush_codemap(font::P_impl *P_p, u32_char ch, std::shared_ptr<image> img)
 {
     int code = (int)floor(static_cast<int>(ch) / 256.0);
     if (P_p->codemap.find(code) == P_p->codemap.end())
     {
         int ats = P_p->res * 16;
-        P_p->codemap[code] = std::make_shared<atlas>(ats, ats);
+        P_p->codemap[code] = atlas::make(ats, ats);
         P_p->codemap[code]->begin();
     }
 
@@ -64,14 +67,14 @@ glyph font::make_glyph(u32_char ch)
         buf[i + 3] = grey;
     }
 
-    shared<image> img = make_image((int)face->glyph->bitmap.width, (int)face->glyph->bitmap.rows, buf);
+    std::shared_ptr<image> img = image::make((int)face->glyph->bitmap.width, (int)face->glyph->bitmap.rows, buf);
 
     double ds = P_pimpl->res / P_pimpl->pix;
 
     glyph g;
     g.texpart = P_flush_codemap(P_pimpl.get(), ch, img);
-    set_texture_parameters(g.texpart, texture_parameters(texture_parameter::UV_CLAMP, texture_parameter::FILTER_LINEAR,
-                                                         texture_parameter::FILTER_LINEAR));
+    g.texpart->parameters(texture_parameters(texture_parameter::UV_CLAMP, texture_parameter::FILTER_LINEAR,
+                                             texture_parameter::FILTER_LINEAR));
     g.size.x = ch == ' ' ? face->glyph->metrics.horiAdvance / ds / 64.0 : face->glyph->metrics.width / ds / 64.0;
     g.size.y = face->glyph->metrics.height / ds / 64.0;
     g.advance = face->glyph->advance.x / ds / 64.0;
@@ -85,21 +88,21 @@ glyph font::make_glyph(u32_char ch)
     return g;
 }
 
-font_render_bound font::make_vtx(brush *brush, const std::string &u8_str, double x, double y, bitmask<font_align> align,
-                                 double max_w, double scale)
+font_render_bound font::make_vtx(std::shared_ptr<brush> brush, const std::string &u8_str, double x, double y,
+                                 long align, double max_w, double scale)
 {
     static std::u32string P_cvtbuf;
     P_cvt_u32(u8_str, &P_cvtbuf);
     return make_vtx(brush, P_cvtbuf, x, y, align, max_w, scale);
 }
 
-font_render_bound font::make_vtx(brush *brush, const std::u32string &str, double x, double y, bitmask<font_align> align,
-                                 double max_w, double scale)
+font_render_bound font::make_vtx(std::shared_ptr<brush> brush, const std::u32string &str, double x, double y,
+                                 long align, double max_w, double scale)
 {
     if (str.length() == 0 || str.length() > INT16_MAX)
         return {};
 
-    if (align.test(font_align::LEFT) && align.test(font_align::UP))
+    if (align & font_align::LEFT && align & font_align::UP)
     {
         double h_scaled = scale * lspc;
         double w = 0;
@@ -161,22 +164,22 @@ font_render_bound font::make_vtx(brush *brush, const std::u32string &str, double
     }
 
     // align the positions
-    auto qd = make_vtx(nullptr, str, x, y, mask(font_align::UP, font_align::LEFT), max_w, scale);
+    auto qd = make_vtx(nullptr, str, x, y, font_align::NORMAL, max_w, scale);
     double w = qd.region.width, h = qd.region.height;
 
-    if (align.test(font_align::DOWN))
+    if (align & font_align::DOWN)
         y -= h;
-    if (align.test(font_align::V_CENTER))
+    if (align & font_align::V_CENTER)
         y -= h / 2;
-    if (align.test(font_align::RIGHT))
+    if (align & font_align::RIGHT)
         x -= w;
-    if (align.test(font_align::H_CENTER))
+    if (align & font_align::H_CENTER)
         x -= w / 2;
 
-    return make_vtx(brush, str, x, y, mask(font_align::UP, font_align::LEFT), max_w, scale);
+    return make_vtx(brush, str, x, y, font_align::NORMAL, max_w, scale);
 }
 
-shared<font> load_font(const path_handle &path, double res_h, double pixel_h)
+std::shared_ptr<font> font::load(const path_handle &path, double res_h, double pixel_h)
 {
     auto fptr = std::make_shared<font>();
 
@@ -198,4 +201,4 @@ shared<font> load_font(const path_handle &path, double res_h, double pixel_h)
     return fptr;
 }
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

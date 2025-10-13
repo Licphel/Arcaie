@@ -1,16 +1,17 @@
 #include <core/log.h>
 #include <gfx/brush.h>
 #include <gfx/image.h>
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include <core/io.h>
 
 // clang-format off
 #include <gl/glew.h>
 #include <gl/gl.h>
 // clang-format on
 
-namespace arcaie::gfx
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
+namespace arc::gfx
 {
 
 image::image() = default;
@@ -28,19 +29,19 @@ image::~image()
     pixels = nullptr;
 }
 
-shared<image> load_image(const path_handle &path)
+std::shared_ptr<image> image::load(const path_handle &path)
 {
-    shared<image> img = std::make_shared<image>();
+    std::shared_ptr<image> img = std::make_shared<image>();
     img->pixels = stbi_load(path.abs_path.c_str(), &img->width, &img->height, nullptr, 4);
     if (img->pixels == nullptr)
-        arcthrow(ARC_FATAL, "path not found: {}", path.abs_path);
+        print_throw(ARC_FATAL, "path not found: {}", path.abs_path);
     img->P_is_from_stb = true;
     return img;
 }
 
-shared<image> make_image(int width, int height, byte *data)
+std::shared_ptr<image> image::make(int width, int height, byte *data)
 {
-    shared<image> img = std::make_shared<image>();
+    std::shared_ptr<image> img = std::make_shared<image>();
     img->width = width;
     img->height = height;
     img->pixels = data;
@@ -54,23 +55,23 @@ texture::~texture()
         glDeleteTextures(1, &P_texture_id);
 }
 
-shared<texture> make_texture(shared<image> img)
+std::shared_ptr<texture> texture::make(std::shared_ptr<image> img)
 {
-    shared<texture> tex = std::make_shared<texture>();
+    std::shared_ptr<texture> tex = std::make_shared<texture>();
     unsigned int id;
     glGenTextures(1, &id);
     tex->P_texture_id = id;
 
     if (img != nullptr)
-        lazylink_texture_data(tex, img);
+        tex->P_link_data(img);
 
     return tex;
 }
 
-void set_texture_parameters(shared<texture> tex, texture_parameters param)
+void texture::parameters(texture_parameters param)
 {
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex->P_texture_id);
+    glBindTexture(GL_TEXTURE_2D, P_texture_id);
 
     GLenum mode0;
     switch (param.uv)
@@ -96,67 +97,67 @@ void set_texture_parameters(shared<texture> tex, texture_parameters param)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void lazylink_texture_data(shared<texture> tex, shared<image> img)
+void texture::P_link_data(std::shared_ptr<image> img)
 {
-    tex->P_relying_image = img;
-    tex->full_width = tex->width = img->width;
-    tex->full_height = tex->height = img->height;
+    P_relying_image = img;
+    full_width = width = img->width;
+    full_height = height = img->height;
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex->P_texture_id);
+    glBindTexture(GL_TEXTURE_2D, P_texture_id);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->width, img->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img->pixels);
 
-    set_texture_parameters(tex, {});
+    parameters({});
 
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-shared<texture> cut_texture(shared<texture> tex, const quad &src)
+std::shared_ptr<texture> texture::cut(const quad &src)
 {
-    shared<texture> ntex = std::make_shared<texture>();
+    std::shared_ptr<texture> ntex = std::make_shared<texture>();
     ntex->width = src.width;
     ntex->height = src.height;
-    ntex->full_width = tex->full_width;
-    ntex->full_height = tex->full_height;
+    ntex->full_width = full_width;
+    ntex->full_height = full_height;
     ntex->u = src.x;
     ntex->v = src.y;
-    ntex->root = tex;
-    ntex->P_relying_image = tex->P_relying_image;
-    ntex->P_texture_id = tex->P_texture_id;
-    ntex->P_is_framebuffer = tex->P_is_framebuffer;
+    ntex->root = shared_from_this();
+    ntex->P_relying_image = P_relying_image;
+    ntex->P_texture_id = P_texture_id;
+    ntex->P_is_framebuffer = P_is_framebuffer;
     return ntex;
 }
 
-void bind_texture(int unit, shared<texture> tex)
+void texture::P_bind(int unit)
 {
     if (unit == 0)
-        arcthrow(ARC_FATAL, "cannot bind to texture unit 0, since it is reserved.");
+        print_throw(ARC_FATAL, "cannot bind to texture unit 0, since it is reserved.");
     glActiveTexture(GL_TEXTURE0 + unit);
-    glBindTexture(GL_TEXTURE_2D, tex->P_texture_id);
+    glBindTexture(GL_TEXTURE_2D, P_texture_id);
 }
 
 nine_patches::nine_patches() = default;
 
-nine_patches::nine_patches(shared<texture> tex) : nine_patches(tex, 1)
+nine_patches::nine_patches(std::shared_ptr<texture> tex) : nine_patches(tex, 1)
 {
 }
 
-nine_patches::nine_patches(shared<texture> tex, double scale) : scale(scale)
+nine_patches::nine_patches(std::shared_ptr<texture> tex, double scale) : scale(scale)
 {
     double p13 = 1.0 / 3.0 * tex->width;
     double p23 = 2.0 / 3.0 * tex->height;
     tw = p13 * scale;
     th = p13 * scale;
 
-    lt = cut_texture(tex, quad(0, 0, p13, p13));
-    t = cut_texture(tex, quad(p13, 0, p13, p13));
-    rt = cut_texture(tex, quad(p23, 0, p13, p13));
-    l = cut_texture(tex, quad(0, p13, p13, p13));
-    c = cut_texture(tex, quad(p13, p13, p13, p13));
-    r = cut_texture(tex, quad(p23, p13, p13, p13));
-    lb = cut_texture(tex, quad(0, p23, p13, p13));
-    b = cut_texture(tex, quad(p13, p23, p13, p13));
-    rb = cut_texture(tex, quad(p23, p23, p13, p13));
+    lt = tex->cut(quad(0, 0, p13, p13));
+    t = tex->cut(quad(p13, 0, p13, p13));
+    rt = tex->cut(quad(p23, 0, p13, p13));
+    l = tex->cut(quad(0, p13, p13, p13));
+    c = tex->cut(quad(p13, p13, p13, p13));
+    r = tex->cut(quad(p23, p13, p13, p13));
+    lb = tex->cut(quad(0, p23, p13, p13));
+    b = tex->cut(quad(p13, p23, p13, p13));
+    rb = tex->cut(quad(p23, p23, p13, p13));
 
 #ifndef ARC_Y_IS_DOWN
     std::swap(lt, lb);
@@ -165,7 +166,7 @@ nine_patches::nine_patches(shared<texture> tex, double scale) : scale(scale)
 #endif
 }
 
-void nine_patches::make_vtx(brush *brush, const quad &dst) const
+void nine_patches::make_vtx(std::shared_ptr<brush> brush, const quad &dst) const
 {
     double nw = ceil(dst.width / tw);
     double nh = ceil(dst.height / tw);
@@ -220,4 +221,4 @@ void nine_patches::make_vtx(brush *brush, const quad &dst) const
     brush->draw_texture(rb, quad(x2, y2, tw, th));
 }
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

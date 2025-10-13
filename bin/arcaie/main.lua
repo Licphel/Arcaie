@@ -1,10 +1,7 @@
 local tex = arc.asset.texture("arcaie:gfx/misc/test.png")
 local quad = arc.math.quad
 local vec2 = arc.math.vec2
-
-for key, value in pairs(_G) do
-    print(key, "  ", value)
-end
+local nt = arc.net;
 
 function draw(brush)
     brush:draw_rect(quad(20, 50, 100, 100))
@@ -23,6 +20,8 @@ function tick(level)
     local cmp = level:get_component("pos", ref)
     cmp.x = 3.5
     level:destroy_entity(ref)
+
+    --nt.socket.remote():send_to_server("dummy", { str = "hello lua!" })
 end
 
 function sys_proc_pos(level)

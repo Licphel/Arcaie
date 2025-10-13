@@ -1,6 +1,6 @@
 #pragma once
 
-namespace arcaie
+namespace arc
 {
 
 struct watch
@@ -27,4 +27,4 @@ struct clock
 
 double lerp(double old, double now);
 
-} // namespace arcaie
+} // namespace arc

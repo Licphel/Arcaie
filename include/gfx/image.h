@@ -1,9 +1,10 @@
 #pragma once
 #include <core/def.h>
-#include <core/io.h>
 #include <core/math.h>
+#include <functional>
+#include <core/io.h>
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
 
 struct brush;
@@ -17,22 +18,9 @@ struct image
     image();
     image(byte *data, int w, int h);
     ~image();
-};
 
-struct texture
-{
-    int u = 0;
-    int v = 0;
-    int width = 0;
-    int height = 0;
-    int full_width = 0;
-    int full_height = 0;
-    /* maybe nullptr */ shared<image> P_relying_image = nullptr;
-    /* unstable */ unsigned int P_texture_id = 0;
-    /* unstable */ bool P_is_framebuffer;
-    shared<texture> root = nullptr;
-
-    ~texture();
+    static std::shared_ptr<image> load(const path_handle &path);
+    static std::shared_ptr<image> make(int width, int height, byte *data);
 };
 
 enum class texture_parameter
@@ -51,25 +39,39 @@ struct texture_parameters
     texture_parameter mag_filter = texture_parameter::FILTER_NEAREST;
 };
 
-shared<image> load_image(const path_handle &path);
-shared<image> make_image(int width, int height, byte *data);
-shared<texture> make_texture(shared<image> img);
-void set_texture_parameters(shared<texture> tex, texture_parameters param);
-void lazylink_texture_data(shared<texture> tex, shared<image> img);
-shared<texture> cut_texture(shared<texture> tex, const quad &src);
-void bind_texture(int i, shared<texture> tex);
+struct texture : std::enable_shared_from_this<texture>
+{
+    int u = 0;
+    int v = 0;
+    int width = 0;
+    int height = 0;
+    int full_width = 0;
+    int full_height = 0;
+    /* maybe nullptr */ std::shared_ptr<image> P_relying_image = nullptr;
+    /* unstable */ unsigned int P_texture_id = 0;
+    /* unstable */ bool P_is_framebuffer;
+    std::shared_ptr<texture> root = nullptr;
+
+    ~texture();
+
+    static std::shared_ptr<texture> make(std::shared_ptr<image> img);
+    void parameters(texture_parameters param);
+    std::shared_ptr<texture> cut(const quad &src);
+    void P_link_data(std::shared_ptr<image> img);
+    void P_bind(int i);
+};
 
 struct nine_patches
 {
-    shared<texture> b;
-    shared<texture> c;
-    shared<texture> l;
-    shared<texture> lb;
-    shared<texture> lt;
-    shared<texture> r;
-    shared<texture> rb;
-    shared<texture> rt;
-    shared<texture> t;
+    std::shared_ptr<texture> b;
+    std::shared_ptr<texture> c;
+    std::shared_ptr<texture> l;
+    std::shared_ptr<texture> lb;
+    std::shared_ptr<texture> lt;
+    std::shared_ptr<texture> r;
+    std::shared_ptr<texture> rb;
+    std::shared_ptr<texture> rt;
+    std::shared_ptr<texture> t;
     double scale;
     double th;
     double tw;
@@ -78,10 +80,10 @@ struct nine_patches
     bool P_enable_overlapping = true;
 
     nine_patches();
-    nine_patches(shared<texture> tex);
-    nine_patches(shared<texture> tex, double scale);
+    nine_patches(std::shared_ptr<texture> tex);
+    nine_patches(std::shared_ptr<texture> tex, double scale);
 
-    void make_vtx(brush *brush, const quad &dst) const;
+    void make_vtx(std::shared_ptr<brush> brush, const quad &dst) const;
 };
 
-} // namespace arcaie::gfx
+} // namespace arc::gfx

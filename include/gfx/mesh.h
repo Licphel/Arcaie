@@ -1,19 +1,18 @@
 #pragma once
-#include <cstring>
-#include <gfx/image.h>
-#include <gfx/brush.h>
-#include <gfx/cbuf.h>
-#include <memory>
-#include <vector>
+#include <core/def.h>
+#include <gfx/buffer.h>
+#include <gfx/state.h>
 
-namespace arcaie::gfx
+namespace arc::gfx
 {
+
+struct brush;
 
 struct mesh
 {
     graph_state state;
-    shared<complex_buffer> buffer;
-    shared<brush> P_brush;
+    std::shared_ptr<complex_buffer> buffer;
+    std::shared_ptr<brush> P_brush;
 
     /* unstable */ unsigned int P_vao, P_vbo, P_ebo;
     /* unstable */ bool P_is_direct;
@@ -21,13 +20,13 @@ struct mesh
     mesh();
     ~mesh();
     // clear the mesh and attempt to redraw it.
-    brush *retry();
+    std::shared_ptr<brush> retry();
     // record the mesh state and buffer content, and end the drawing.
     void record();
     // draw the mesh with the brush. the brush should be direct-to-screen.
-    void draw(brush *gbrush);
+    void draw(std::shared_ptr<brush> gbrush);
+
+    static std::shared_ptr<mesh> make();
 };
 
-shared<mesh> make_mesh();
-
-} // namespace arcaie::gfx
+} // namespace arc::gfx

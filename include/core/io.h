@@ -2,10 +2,11 @@
 #include <core/def.h>
 #include <filesystem>
 #include <vector>
+#include <core/buffer.h>
 
 namespace fs = std::filesystem;
 
-namespace arcaie
+namespace arc
 {
 
 struct path_handle
@@ -76,4 +77,4 @@ void io_write_str(const path_handle &path, const std::string &text);
 std::vector<byte> io_compress(std::vector<byte> buf, io_compression_level clvl = io_compression_level::OPTIMAL);
 std::vector<byte> io_decompress(std::vector<byte> buf);
 
-} // namespace arcaie
+} // namespace arc

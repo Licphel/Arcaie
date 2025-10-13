@@ -1,8 +1,7 @@
 #pragma once
-#include <vector>
 #include <core/def.h>
 
-namespace arcaie
+namespace arc
 {
 
 struct uuid
@@ -15,22 +14,22 @@ struct uuid
     bool operator==(const uuid &other) const;
     bool operator<(const uuid &other) const;
     operator std::string() const;
+
+    // a null uuid, all bytes are 0.
+    static uuid empty();
+    // generate a random uuid with current time and a random number from #get_grand.
+    // hopefully they won't collide.
+    static uuid make();
 };
 
-// returns a null uuid, all bytes are 0.
-uuid uuid_null();
-// generate a random uuid with current time and a random number from #get_grand.
-// hopefully they won't collide.
-uuid uuid_generate();
-
-} // namespace arcaie
+} // namespace arc
 
 namespace std
 {
 
-template <> struct hash<arcaie::uuid>
+template <> struct hash<arc::uuid>
 {
-    std::size_t operator()(const arcaie::uuid &id) const noexcept
+    std::size_t operator()(const arc::uuid &id) const noexcept
     {
         return id.P_hash;
     }
