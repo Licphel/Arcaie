@@ -12,7 +12,7 @@ namespace arc
 
 using entity_ref = uuid;
 
-enum class ecs_component_sync_mode : byte
+enum class ecs_component_sync_mode : uint8_t
 {
     NONE,
     PREDICT,
@@ -121,7 +121,7 @@ template <typename T> struct ecs_pool : ecs_pool_terased
 };
 
 #define ECS_PHASE_COUNT 3
-enum class ecs_phase : byte
+enum class ecs_phase : uint8_t
 {
     PRE,
     COMMON,

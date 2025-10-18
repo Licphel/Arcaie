@@ -1,7 +1,6 @@
 #pragma once
 #include <core/def.h>
 #include <core/math.h>
-#include <functional>
 #include <core/io.h>
 
 namespace arc::gfx
@@ -12,15 +11,15 @@ struct brush;
 struct image
 {
     int width, height;
-    byte *pixels;
+    uint8_t *pixels;
     /* unstable */ bool P_is_from_stb = false;
 
     image();
-    image(byte *data, int w, int h);
+    image(uint8_t *data, int w, int h);
     ~image();
 
     static std::shared_ptr<image> load(const path_handle &path);
-    static std::shared_ptr<image> make(int width, int height, byte *data);
+    static std::shared_ptr<image> make(int width, int height, uint8_t *data);
 };
 
 enum class texture_parameter

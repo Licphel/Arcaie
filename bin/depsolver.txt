@@ -1,5 +1,5 @@
-$exe  = "arcaie.exe"
-$root = "C:\msys64\mingw64\bin"
+$exe  = "arcaie-release.exe"
+$root = "C:\msys64\clang64\bin"
 $list = & "${root}\objdump.exe" -p $exe |
         Where-Object { $_ -match 'DLL Name:\s+(\S+\.dll)' } |
         ForEach-Object { $Matches[1] }

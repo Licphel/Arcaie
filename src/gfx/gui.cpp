@@ -27,7 +27,7 @@ void gui::tick_currents()
 
 void gui::join(std::shared_ptr<gui_component> comp)
 {
-    comp->P_index_in_gui = (int)P_components.size();
+    comp->P_index_in_gui = static_cast<int>(P_components.size());
     P_components.push_back(comp);
     comp->parent = this;
 }
@@ -36,7 +36,7 @@ void gui::remove(std::shared_ptr<gui_component> comp)
 {
     int idx = comp->P_index_in_gui;
     P_components.erase(P_components.begin() + idx);
-    for (int i = idx; i < (int)P_components.size(); i++)
+    for (int i = idx; i < static_cast<int>(P_components.size()); i++)
         P_components[i]->P_index_in_gui = i;
     comp->P_index_in_gui = -1;
     comp->parent = nullptr;
@@ -178,9 +178,9 @@ void P_xside_scroller::tick()
 
     pos += P_acc * clock::now().delta;
     if (P_acc > 0)
-        P_acc = std::clamp(P_acc - clock::now().delta * P_speed * 6, 0.0, double(INT_MAX));
+        P_acc = std::clamp(P_acc - clock::now().delta * P_speed * 6, 0.0, static_cast<double>(INT_MAX));
     else if (P_acc < 0)
-        P_acc = std::clamp(P_acc + clock::now().delta * P_speed * 6, double(INT_MIN), 0.0);
+        P_acc = std::clamp(P_acc + clock::now().delta * P_speed * 6, static_cast<double>(INT_MIN), 0.0);
     P_clamp();
 
     if (key_held(ARC_MOUSE_BUTTON_LEFT))
@@ -326,7 +326,7 @@ static void P_insert(std::u32string &str, int &pointer, const std::string ins)
 
     if (str.length() >= 32767)
         return;
-    if (pointer == (int)str.size())
+    if (pointer == static_cast<int>(str.size()))
         str += P_cvtbuf;
     else
         str.insert(pointer, P_cvtbuf);
@@ -391,7 +391,7 @@ void gui_text_view::tick()
     if (key_press(ARC_KEY_LEFT) || key_repeat(ARC_KEY_LEFT))
         pointer = std::max(0, pointer - 1);
     if (key_repeat(ARC_KEY_RIGHT) || key_press(ARC_KEY_RIGHT))
-        pointer = std::min((int)content.length(), pointer + 1);
+        pointer = std::min(static_cast<int>(content.length()), pointer + 1);
 
     if (key_repeat(ARC_KEY_BACKSPACE) || key_press(ARC_KEY_BACKSPACE))
     {

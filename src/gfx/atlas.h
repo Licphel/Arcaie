@@ -12,7 +12,7 @@ struct atlas
 
     int width;
     int height;
-    byte *pixels;
+    uint8_t *pixels;
     std::shared_ptr<image> output_image = nullptr;
     std::shared_ptr<texture> output_texture = nullptr;
 

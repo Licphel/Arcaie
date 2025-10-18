@@ -7,7 +7,7 @@ namespace arc
 bool P_check_is_system_little_endian()
 {
     constexpr uint32_t test_value = 0x01020304;
-    return reinterpret_cast<const byte *>(&test_value)[0] == 0x04;
+    return reinterpret_cast<const uint8_t *>(&test_value)[0] == 0x04;
 }
 
 byte_buf::byte_buf() = default;
@@ -16,7 +16,7 @@ byte_buf::byte_buf(size_t initial_size) : P_data(initial_size)
 {
 }
 
-byte_buf::byte_buf(const std::vector<byte> &vec)
+byte_buf::byte_buf(const std::vector<uint8_t> &vec)
 {
     P_data = vec;
     P_wpos = vec.size();
@@ -178,17 +178,17 @@ size_t byte_buf::write_pos() const
     return P_wpos;
 }
 
-std::vector<byte> byte_buf::to_vector() const
+std::vector<uint8_t> byte_buf::to_vector() const
 {
     if (P_wpos > P_data.size())
         print_throw(ARC_FATAL, "byte buf write pos out of range!");
-    return std::vector<byte>(P_data.begin(), P_data.begin() + P_wpos);
+    return std::vector<uint8_t>(P_data.begin(), P_data.begin() + P_wpos);
 }
 
-std::vector<byte> byte_buf::read_advance(int len)
+std::vector<uint8_t> byte_buf::read_advance(int len)
 {
     ensure_readable(len);
-    auto vec = std::vector<byte>(P_data.begin() + P_rpos, P_data.begin() + P_rpos + len);
+    auto vec = std::vector<uint8_t>(P_data.begin() + P_rpos, P_data.begin() + P_rpos + len);
     P_rpos += len;
     return vec;
 }

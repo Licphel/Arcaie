@@ -130,12 +130,12 @@ path_handle io_execution_path()
     return path_handle(fs::current_path().string()) / LIB_NAME;
 }
 
-static std::vector<byte> brotli_compress(const std::vector<byte> &src, int quality)
+static std::vector<uint8_t> brotli_compress(const std::vector<uint8_t> &src, int quality)
 {
     if (src.empty())
         return {};
     size_t max_sz = BrotliEncoderMaxCompressedSize(src.size());
-    std::vector<byte> out(max_sz);
+    std::vector<uint8_t> out(max_sz);
     size_t encoded_sz = max_sz;
     if (BROTLI_TRUE != BrotliEncoderCompress(quality, BROTLI_DEFAULT_WINDOW, BROTLI_DEFAULT_MODE, src.size(),
                                              src.data(), &encoded_sz, out.data()))
@@ -144,22 +144,22 @@ static std::vector<byte> brotli_compress(const std::vector<byte> &src, int quali
     return out;
 }
 
-static std::vector<byte> brotli_decompress(const std::vector<byte> &src)
+static std::vector<uint8_t> brotli_decompress(const std::vector<uint8_t> &src)
 {
     if (src.empty())
         return {};
-    std::vector<byte> dst;
+    std::vector<uint8_t> dst;
     size_t avail_in = src.size();
-    const byte *nxt_in = src.data();
+    const uint8_t *nxt_in = src.data();
     BrotliDecoderState *st = BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
     if (!st)
         print_throw(ARC_FATAL, "brotli decoder create failed");
 
     for (;;)
     {
-        byte buf[64 * 1024];
+        uint8_t buf[64 * 1024];
         size_t avail_out = sizeof(buf);
-        byte *nxt_out = buf;
+        uint8_t *nxt_out = buf;
         auto rc = BrotliDecoderDecompressStream(st, &avail_in, &nxt_in, &avail_out, &nxt_out, nullptr);
         size_t produced = sizeof(buf) - avail_out;
         if (produced)
@@ -173,14 +173,14 @@ static std::vector<byte> brotli_decompress(const std::vector<byte> &src)
     return dst;
 }
 
-std::vector<byte> io_read_bytes(const path_handle &path, io_compression_level clvl)
+std::vector<uint8_t> io_read_bytes(const path_handle &path, io_compression_level clvl)
 {
     std::ifstream file(path.P_npath, std::ios::binary | std::ios::ate);
     if (!file)
         print_throw(ARC_FATAL, "cannot find {}", path.abs_path);
     size_t len = file.tellg();
     file.seekg(0, std::ios::beg);
-    std::vector<byte> raw(len);
+    std::vector<uint8_t> raw(len);
     file.read(reinterpret_cast<char *>(raw.data()), len);
     if (!file)
         print_throw(ARC_FATAL, "short read in {}", path.abs_path);
@@ -191,7 +191,7 @@ std::vector<byte> io_read_bytes(const path_handle &path, io_compression_level cl
     return io_decompress(raw);
 }
 
-void io_write_bytes(const path_handle &path, const std::vector<byte> &data, io_compression_level clvl)
+void io_write_bytes(const path_handle &path, const std::vector<uint8_t> &data, io_compression_level clvl)
 {
     if (!io_exists(path))
         io_mkdirs(path);
@@ -210,13 +210,13 @@ std::string io_read_str(const path_handle &path)
 
 void io_write_str(const path_handle &path, const std::string &text)
 {
-    io_write_bytes(path, std::vector<byte>(reinterpret_cast<const byte *>(text.data()),
-                                           reinterpret_cast<const byte *>(text.data() + text.size())));
+    io_write_bytes(path, std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(text.data()),
+                                              reinterpret_cast<const uint8_t *>(text.data() + text.size())));
 }
 
-std::vector<byte> io_compress(std::vector<byte> buf, io_compression_level clvl)
+std::vector<uint8_t> io_compress(std::vector<uint8_t> buf, io_compression_level clvl)
 {
-    std::vector<byte> out;
+    std::vector<uint8_t> out;
     switch (clvl)
     {
     case io_compression_level::NO:
@@ -232,12 +232,12 @@ std::vector<byte> io_compress(std::vector<byte> buf, io_compression_level clvl)
         out = brotli_compress(buf, 11);
         break;
     default:
-        print_throw(ARC_FATAL, "unsupported compression level {}", (int)clvl);
+        print_throw(ARC_FATAL, "unsupported compression level {}", static_cast<int>(clvl));
     }
     return out;
 }
 
-std::vector<byte> io_decompress(std::vector<byte> buf)
+std::vector<uint8_t> io_decompress(std::vector<uint8_t> buf)
 {
     return brotli_decompress(buf);
 }

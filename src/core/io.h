@@ -69,12 +69,12 @@ enum class io_compression_level
 };
 
 // note: if you want to read a compressed file, use compression_level::DCMP_READ instead of compression_level::RAW_READ.
-std::vector<byte> io_read_bytes(const path_handle &path, io_compression_level clvl = io_compression_level::RAW_READ);
-void io_write_bytes(const path_handle &path, const std::vector<byte> &data,
+std::vector<uint8_t> io_read_bytes(const path_handle &path, io_compression_level clvl = io_compression_level::RAW_READ);
+void io_write_bytes(const path_handle &path, const std::vector<uint8_t> &data,
                     io_compression_level clvl = io_compression_level::NO);
 std::string io_read_str(const path_handle &path);
 void io_write_str(const path_handle &path, const std::string &text);
-std::vector<byte> io_compress(std::vector<byte> buf, io_compression_level clvl = io_compression_level::OPTIMAL);
-std::vector<byte> io_decompress(std::vector<byte> buf);
+std::vector<uint8_t> io_compress(std::vector<uint8_t> buf, io_compression_level clvl = io_compression_level::OPTIMAL);
+std::vector<uint8_t> io_decompress(std::vector<uint8_t> buf);
 
 } // namespace arc

@@ -7,40 +7,45 @@
   },
   "configurePresets": [
     {
-      "name": "mingw-debug",
-      "displayName": "MinGW Debug",
+      "name": "clang-debug",
+      "displayName": "Clang Debug",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/debug",
+      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": true
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "CMAKE_C_COMPILER": "C:/msys64/clang64/bin/clang.exe",
+        "CMAKE_CXX_COMPILER": "C:/msys64/clang64/bin/clang++.exe",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -fstandalone-debug"
       },
       "environment": {
-        "PATH": "C:/msys64/mingw64/bin"
+        "PATH": "C:/msys64/clang64/bin"
       }
     },
     {
-      "name": "mingw-release",
-      "displayName": "MinGW Release",
+      "name": "clang-release",
+      "displayName": "Clang Release",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/release",
+      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": true
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+        "CMAKE_C_COMPILER": "C:/msys64/clang64/bin/clang.exe",
+        "CMAKE_CXX_COMPILER": "C:/msys64/clang64/bin/clang++.exe"
       },
       "environment": {
-        "PATH": "C:/msys64/mingw64/bin"
+        "PATH": "C:/msys64/clang64/bin"
       }
     }
   ],
   "buildPresets": [
     {
-      "name": "mingw-debug",
-      "configurePreset": "mingw-debug"
+      "name": "clang-debug",
+      "configurePreset": "clang-debug"
     },
     {
-      "name": "mingw-release",
-      "configurePreset": "mingw-release"
+      "name": "clang-release",
+      "configurePreset": "clang-release"
     }
   ]
 }

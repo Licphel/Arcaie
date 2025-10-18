@@ -1,10 +1,11 @@
 #include <audio/device.h>
 #include <core/bin.h>
 #include <core/bio.h>
-#include <core/io.h>
-#include <lua/lua.h>
 #include <core/buffer.h>
+#include <core/io.h>
 #include <core/uuid.h>
+#include <lua/lua.h>
+
 
 namespace arc::lua
 {
@@ -80,7 +81,7 @@ void lua_bind_base(lua_state &lua)
     buf_type["read_byte_buf"] = &byte_buf::read_byte_buf;
     buf_type["read_string"] = &byte_buf::read_string;
     buf_type["read_uuid"] = &byte_buf::read_uuid;
-    buf_type["write_byte"] = [](byte_buf &self, byte value) { self.write<byte>(value); };
+    buf_type["write_byte"] = [](byte_buf &self, uint8_t value) { self.write<uint8_t>(value); };
     buf_type["write_int"] = [](byte_buf &self, int value) { self.write<int>(value); };
     buf_type["write_uint"] = [](byte_buf &self, unsigned int value) { self.write<unsigned int>(value); };
     buf_type["write_long"] = [](byte_buf &self, long value) { self.write<long>(value); };
@@ -90,7 +91,7 @@ void lua_bind_base(lua_state &lua)
     buf_type["write_bool"] = [](byte_buf &self, bool value) { self.write<bool>(value); };
     buf_type["write_short"] = [](byte_buf &self, short value) { self.write<short>(value); };
     buf_type["write_ushort"] = [](byte_buf &self, unsigned short value) { self.write<unsigned short>(value); };
-    buf_type["read_byte"] = [](byte_buf &self) -> byte { return self.read<byte>(); };
+    buf_type["read_byte"] = [](byte_buf &self) -> uint8_t { return self.read<uint8_t>(); };
     buf_type["read_int"] = [](byte_buf &self) -> int { return self.read<int>(); };
     buf_type["read_uint"] = [](byte_buf &self) -> unsigned int { return self.read<unsigned int>(); };
     buf_type["read_long"] = [](byte_buf &self) -> long { return self.read<long>(); };
@@ -100,7 +101,7 @@ void lua_bind_base(lua_state &lua)
     buf_type["read_bool"] = [](byte_buf &self) -> bool { return self.read<bool>(); };
     buf_type["read_short"] = [](byte_buf &self) -> short { return self.read<short>(); };
     buf_type["read_ushort"] = [](byte_buf &self) -> unsigned short { return self.read<unsigned short>(); };
-    buf_type["peek_byte"] = [](byte_buf &self) -> byte { return self.peek<byte>(); };
+    buf_type["peek_byte"] = [](byte_buf &self) -> uint8_t { return self.peek<uint8_t>(); };
     buf_type["peek_int"] = [](byte_buf &self) -> int { return self.peek<int>(); };
     buf_type["peek_uint"] = [](byte_buf &self) -> unsigned int { return self.peek<unsigned int>(); };
     buf_type["peek_long"] = [](byte_buf &self) -> long { return self.peek<long>(); };

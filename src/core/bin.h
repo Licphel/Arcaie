@@ -1,11 +1,13 @@
 #pragma once
-#include <core/def.h>
-#include <core/log.h>
 #include <any>
-#include <vector>
-#include <unordered_map>
-#include <core/io.h>
 #include <core/buffer.h>
+#include <core/def.h>
+#include <core/io.h>
+#include <core/log.h>
+#include <memory>
+#include <unordered_map>
+#include <vector>
+
 
 namespace arc
 {
@@ -13,7 +15,7 @@ namespace arc
 struct binary_map;
 struct binary_array;
 
-enum class P_bincvt : byte
+enum class P_bincvt : uint8_t
 {
     BYTE,
     SHORT,
@@ -38,7 +40,7 @@ struct binary_value
     {
         using decay_t = std::decay_t<T>;
 
-        if constexpr (std::is_same_v<byte, decay_t>)
+        if constexpr (std::is_same_v<uint8_t, decay_t>)
             return {P_bincvt::BYTE, std::any(v)};
         else if constexpr (std::is_same_v<short, decay_t>)
             return {P_bincvt::SHORT, std::any(v)};
@@ -57,11 +59,11 @@ struct binary_value
         else if constexpr (std::is_same_v<bool, decay_t>)
             return {P_bincvt::BOOL, std::any(v)};
         else if constexpr (std::is_same_v<binary_map, decay_t>)
-            return {P_bincvt::MAP, std::any(v)};
+            return {P_bincvt::MAP, std::make_any<std::shared_ptr<binary_map>>(std::make_shared<binary_map>(v))};
         else if constexpr (std::is_same_v<binary_array, decay_t>)
-            return {P_bincvt::ARRAY, std::any(v)};
+            return {P_bincvt::ARRAY, std::make_any<std::shared_ptr<binary_array>>(std::make_shared<binary_array>(v))};
         else if constexpr (std::is_same_v<byte_buf, decay_t>)
-            return {P_bincvt::BUF, std::any(v)};
+            return {P_bincvt::BUF, std::make_any<std::shared_ptr<byte_buf>>(std::make_shared<byte_buf>(v))};
 
         print_throw(ARC_FATAL, "unsupported type.");
     }
@@ -71,8 +73,8 @@ struct binary_value
         switch (type)
         {
         case P_bincvt::BYTE:
-            if constexpr (std::is_convertible_v<byte, T>)
-                return static_cast<T>(std::any_cast<byte>(P_anyv));
+            if constexpr (std::is_convertible_v<uint8_t, T>)
+                return static_cast<T>(std::any_cast<uint8_t>(P_anyv));
             else
                 break;
         case P_bincvt::SHORT:
@@ -112,17 +114,17 @@ struct binary_value
                 break;
         case P_bincvt::MAP:
             if constexpr (std::is_convertible_v<binary_map, T>)
-                return static_cast<T>(std::any_cast<binary_map>(P_anyv));
+                return *std::any_cast<std::shared_ptr<binary_map>>(P_anyv);
             else
                 break;
         case P_bincvt::ARRAY:
             if constexpr (std::is_convertible_v<binary_array, T>)
-                return static_cast<T>(std::any_cast<binary_array>(P_anyv));
+                return *std::any_cast<std::shared_ptr<binary_array>>(P_anyv);
             else
                 break;
         case P_bincvt::BUF:
             if constexpr (std::is_convertible_v<byte_buf, T>)
-                return static_cast<T>(std::any_cast<byte_buf>(P_anyv));
+                return *std::any_cast<std::shared_ptr<byte_buf>>(P_anyv);
             else
                 break;
         default:

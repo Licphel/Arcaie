@@ -15,7 +15,7 @@ bool P_check_is_system_little_endian();
 // endian-aware.
 struct byte_buf
 {
-    std::vector<byte> P_data;
+    std::vector<uint8_t> P_data;
     size_t P_rpos = 0;
     size_t P_wpos = 0;
     bool P_l_endian = P_check_is_system_little_endian();
@@ -28,7 +28,7 @@ struct byte_buf
         {
             union {
                 T value;
-                byte bytes[sizeof(T)];
+                uint8_t bytes[sizeof(T)];
             } src, dst;
 
             src.value = value;
@@ -47,7 +47,7 @@ struct byte_buf
 
     byte_buf();
     byte_buf(size_t initial_size);
-    byte_buf(const std::vector<byte> &vec);
+    byte_buf(const std::vector<uint8_t> &vec);
     byte_buf(const byte_buf &cpy);
 
     size_t size() const;
@@ -103,9 +103,9 @@ struct byte_buf
     size_t read_pos() const;
     size_t write_pos() const;
     // copy the data before write position to a vector.
-    std::vector<byte> to_vector() const;
+    std::vector<uint8_t> to_vector() const;
     // read from current read position and advance it by len.
-    std::vector<byte> read_advance(int len);
+    std::vector<uint8_t> read_advance(int len);
     // rewind so that we can read the data from the very beginning.
     void rewind();
     // remove the read data and move the unread data to the front.

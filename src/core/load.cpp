@@ -61,7 +61,7 @@ void asset_loader::next()
         tasks.pop();
         fn();
         P_done_tcount++;
-        progress = double(P_done_tcount) / double(P_total_tcount);
+        progress = static_cast<double>(P_done_tcount) / static_cast<double>(P_total_tcount);
     }
     else
     {

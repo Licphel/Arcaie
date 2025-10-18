@@ -62,12 +62,12 @@ struct level
 
     template <typename F> void add_system(ecs_phase ph, F &&f)
     {
-        P_ecs_syses[int(ph)].emplace_back(std::forward<F>(f));
+        P_ecs_syses[static_cast<int>(ph)].emplace_back(std::forward<F>(f));
     }
 
     void tick_phase(ecs_phase ph)
     {
-        for (auto &sys : P_ecs_syses[int(ph)])
+        for (auto &sys : P_ecs_syses[static_cast<int>(ph)])
             sys(*this);
     }
 

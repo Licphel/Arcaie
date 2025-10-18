@@ -1,12 +1,8 @@
 cmake_minimum_required(VERSION 3.28)
-project(arcaie VERSION 1.0.0 LANGUAGES CXX)
 
-# use ccache
-find_program(CCACHE_PROGRAM ccache)
-if(CCACHE_PROGRAM)
-  set(CMAKE_C_COMPILER_LAUNCHER   "${CCACHE_PROGRAM}")
-  set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-endif()
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # module settings
 set(CMAKE_CXX_STANDARD 20)
@@ -16,18 +12,28 @@ set(CMAKE_CXX_SOURCE_FILE_ENCODING UTF-8 NO-BOM)
 set(CMAKE_CXX_SCAN_FOR_MODULES ON)
 set(CMAKE_EXPERIMENTAL_CXX_MODULE_CMAKE_API "2182bf5c-ef0d-489a-91da-49dacfd01daf")
 set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 1)
+# export for clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+project(arcaie VERSION 1.0.0 LANGUAGES CXX)
+
+# use ccache
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+  set(CMAKE_C_COMPILER_LAUNCHER   "${CCACHE_PROGRAM}")
+  set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+endif()
 
 # naming differences
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(EXECUTABLE_NAME "arcaie-debug")
-    add_compile_options(-g -O0)
+    add_compile_options(-g -O0 -DDEBUG)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(EXECUTABLE_NAME "arcaie-release") 
-    add_compile_options(-O2 -DNDEBUG)
+    add_compile_options(-O3 -DNDEBUG)
 else()
     set(EXECUTABLE_NAME "arcaie")
-    add_compile_options(-O2)
+    add_compile_options(-O3)
 endif()
 
 # set output
@@ -55,7 +61,7 @@ target_include_directories(${EXECUTABLE_NAME}
     PRIVATE ${CMAKE_SOURCE_DIR}/include
     PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
-set(MSYS2_ROOT "C:/msys64/mingw64")
+set(MSYS2_ROOT "C:/msys64/clang64")
 
 target_include_directories(${EXECUTABLE_NAME} PRIVATE
     ${MSYS2_ROOT}/include

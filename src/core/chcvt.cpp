@@ -17,7 +17,7 @@ void P_cvt_u32(const std::string &u8_str, std::u32string *u32_tmp)
     while (it != last)
     {
         unsigned char lead = *it++;
-        u32_char cp;
+        char32_t cp;
         if (lead < 0x80)
             cp = lead;
         else if ((lead & 0xE0) == 0xC0)
@@ -27,7 +27,7 @@ void P_cvt_u32(const std::string &u8_str, std::u32string *u32_tmp)
                 log();
                 return;
             }
-            cp = u32_char(lead & 0x1F) << 6 | (*it++ & 0x3F);
+            cp = char32_t(lead & 0x1F) << 6 | (*it++ & 0x3F);
             if (cp < 0x80)
             {
                 log();
@@ -41,7 +41,7 @@ void P_cvt_u32(const std::string &u8_str, std::u32string *u32_tmp)
                 log();
                 return;
             }
-            cp = u32_char(lead & 0x0F) << 12 | u32_char(*it++ & 0x3F) << 6 | u32_char(*it++ & 0x3F);
+            cp = char32_t(lead & 0x0F) << 12 | char32_t(*it++ & 0x3F) << 6 | char32_t(*it++ & 0x3F);
             if (cp < 0x800 || (cp >= 0xD800 && cp <= 0xDFFF))
             {
                 log();
@@ -55,8 +55,8 @@ void P_cvt_u32(const std::string &u8_str, std::u32string *u32_tmp)
                 log();
                 return;
             }
-            cp = u32_char(lead & 0x07) << 18 | u32_char(*it++ & 0x3F) << 12 | u32_char(*it++ & 0x3F) << 6 |
-                 u32_char(*it++ & 0x3F);
+            cp = char32_t(lead & 0x07) << 18 | char32_t(*it++ & 0x3F) << 12 | char32_t(*it++ & 0x3F) << 6 |
+                 char32_t(*it++ & 0x3F);
             if (cp < 0x10000 || cp > 0x10FFFF)
             {
                 log();
@@ -80,7 +80,7 @@ void P_cvt_u8(const std::u32string &u32_str, std::string *u8_tmp)
     auto push = [u8_tmp](unsigned char byte) { u8_tmp->push_back(static_cast<char>(byte)); };
     auto log = [&]() { print(ARC_WARN, "u32 -> u8 charset converting failed."); };
 
-    for (u32_char cp : u32_str)
+    for (char32_t cp : u32_str)
     {
         if (cp <= 0x7F)
         {

@@ -1,5 +1,6 @@
 #include <core/math.h>
 #include <cmath>
+#include <algorithm>
 
 namespace arc
 {

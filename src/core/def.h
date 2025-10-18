@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 
 #define LIB_NAME "arcaie"
 #define LIB_VERSION "v1.0.0"
@@ -9,12 +8,3 @@
 // the y-axis pointing downwards. you can undefine this to make the y-axis point upwards.
 // however, it is not guaranteed that all parts of the engine will respect this setting.
 #define ARC_Y_IS_DOWN
-
-namespace arc
-{
-
-typedef unsigned char byte;
-// represent a UTF-32 code point.
-typedef char32_t u32_char;
-
-} // namespace arc

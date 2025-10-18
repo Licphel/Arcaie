@@ -1,8 +1,9 @@
+#include <chrono>
 #include <core/def.h>
 #include <core/uuid.h>
-#include <random>
 #include <cstring>
-#include <chrono>
+#include <random>
+
 
 namespace arc
 {
@@ -24,7 +25,7 @@ uuid::operator std::string() const
 
     const char hex_chars[] = "0123456789abcdef";
 
-    for (byte byte : bytes)
+    for (uint8_t byte : bytes)
     {
         result += hex_chars[(byte >> 4) & 0x0F];
         result += hex_chars[byte & 0x0F];

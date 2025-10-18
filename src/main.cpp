@@ -2,7 +2,9 @@
 #include <core/bin.h>
 #include <core/bio.h>
 #include <core/buffer.h>
+#include <core/id.h>
 #include <core/input.h>
+#include <core/io.h>
 #include <core/load.h>
 #include <core/log.h>
 #include <core/rand.h>
@@ -18,9 +20,6 @@
 #include <net/packet.h>
 #include <net/socket.h>
 #include <world/level.h>
-#include <core/io.h>
-#include <core/buffer.h>
-#include <core/id.h>
 
 using namespace arc;
 using namespace arc::gfx;
@@ -58,7 +57,7 @@ struct posic
 
 int main()
 {
-    // binary_map map_0 = bio_read_langd(io_open_local("dat/main.qk"));
+    binary_map map_0 = bio_read_langd(io_open_local("dat/main.qk"));
     binary_map map;
     map["a"] = 1.02;
     map["c"] = binary_array();
@@ -83,6 +82,7 @@ int main()
     lua_bind_modules();
     lua_eval(io_read_str(io_open_local("main.lua")));
     packet::mark_id<packet_2s_heartbeat>();
+    packet::mark_id<packet_dummy>();
 
     g = make_gui<gui>();
 
@@ -120,6 +120,9 @@ int main()
     tk_hook_event_tick([]() {
         elvl->tick_systems();
         lua_protected_call(lua_get<lua_function>("tick"), elvl);
+        sockc.send_to_server(packet::make<packet_dummy>("hello world!"));
+        sockc.tick();
+        socks.tick();
     });
 
     tk_hook_event_render([](std::shared_ptr<brush> brush) {
@@ -142,6 +145,9 @@ int main()
     tk_end_make_device();
 
     tk_lifecycle(60, 20, false);
+
+    sockc.disconnect();
+    socks.stop();
 
     delete elvl;
 }

@@ -1,10 +1,10 @@
 #include <core/chcvt.h>
+#include <core/io.h>
 #include <core/log.h>
 #include <gfx/atlas.h>
+#include <gfx/brush.h>
 #include <gfx/font.h>
 #include <gfx/image.h>
-#include <gfx/brush.h>
-#include <core/io.h>
 
 #include <freetype2/ft2build.h>
 #include FT_FREETYPE_H
@@ -30,9 +30,9 @@ font::~font()
     FT_Done_FreeType(P_pimpl->lib_ptr);
 }
 
-std::shared_ptr<texture> P_flush_codemap(font::P_impl *P_p, u32_char ch, std::shared_ptr<image> img)
+std::shared_ptr<texture> P_flush_codemap(font::P_impl *P_p, char32_t ch, std::shared_ptr<image> img)
 {
-    int code = (int)floor(static_cast<int>(ch) / 256.0);
+    int code = static_cast<int>(std::floor(static_cast<int>(ch) / 256.0));
     if (P_p->codemap.find(code) == P_p->codemap.end())
     {
         int ats = P_p->res * 16;
@@ -46,7 +46,7 @@ std::shared_ptr<texture> P_flush_codemap(font::P_impl *P_p, u32_char ch, std::sh
     return tptr;
 }
 
-glyph font::make_glyph(u32_char ch)
+glyph font::make_glyph(char32_t ch)
 {
     auto face = P_pimpl->face_ptr;
     unsigned int idx = FT_Get_Char_Index(face, ch);
@@ -56,18 +56,19 @@ glyph font::make_glyph(u32_char ch)
     FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
     FT_Bitmap_ m0 = face->glyph->bitmap;
 
-    int len = (int)(m0.width * m0.rows * 4);
-    byte *buf = new byte[len];
+    int len = static_cast<int>(m0.width * m0.rows * 4);
+    uint8_t *buf = new uint8_t[len];
     for (int i = 0; i < len; i += 4)
     {
-        byte grey = m0.buffer[i / 4];
+        uint8_t grey = m0.buffer[i / 4];
         buf[i + 0] = 255;
         buf[i + 1] = 255;
         buf[i + 2] = 255;
         buf[i + 3] = grey;
     }
 
-    std::shared_ptr<image> img = image::make((int)face->glyph->bitmap.width, (int)face->glyph->bitmap.rows, buf);
+    std::shared_ptr<image> img =
+        image::make(static_cast<int>(face->glyph->bitmap.width), static_cast<int>(face->glyph->bitmap.rows), buf);
 
     double ds = P_pimpl->res / P_pimpl->pix;
 
@@ -114,9 +115,9 @@ font_render_bound font::make_vtx(std::shared_ptr<brush> brush, const std::u32str
         bool endln = false;
         int lns = 1;
 
-        for (int i = 0; i < (int)str.length(); i++)
+        for (int i = 0; i < static_cast<int>(str.length()); i++)
         {
-            u32_char ch = str[i];
+            char32_t ch = str[i];
 
             if (ch == '\n' || endln)
             {
@@ -152,7 +153,7 @@ font_render_bound font::make_vtx(std::shared_ptr<brush> brush, const std::u32str
                 brush->draw_texture(g.texpart, {dx + g.offset.x, dy + g.offset.y, g.size.x, g.size.y});
             dx += g.advance;
 
-            if (i == (int)str.length() - 1 || (get_glyph(str[i + 1]) * scale).advance + dx - x >= max_w)
+            if (i == static_cast<int>(str.length()) - 1 || (get_glyph(str[i + 1]) * scale).advance + dx - x >= max_w)
                 lw += g.size.x - g.advance;
         }
 

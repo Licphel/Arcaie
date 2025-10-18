@@ -1,7 +1,8 @@
+#include <core/io.h>
 #include <core/log.h>
 #include <gfx/brush.h>
 #include <gfx/image.h>
-#include <core/io.h>
+
 
 // clang-format off
 #include <gl/glew.h>
@@ -16,7 +17,7 @@ namespace arc::gfx
 
 image::image() = default;
 
-image::image(byte *data, int w, int h) : width(w), height(h), pixels(data)
+image::image(uint8_t *data, int w, int h) : width(w), height(h), pixels(data)
 {
 }
 
@@ -39,7 +40,7 @@ std::shared_ptr<image> image::load(const path_handle &path)
     return img;
 }
 
-std::shared_ptr<image> image::make(int width, int height, byte *data)
+std::shared_ptr<image> image::make(int width, int height, uint8_t *data)
 {
     std::shared_ptr<image> img = std::make_shared<image>();
     img->width = width;

@@ -136,7 +136,7 @@ struct P_noise_perlin : noise
 
     inline int fast_floor(double x) const
     {
-        int xi = (int)x;
+        int xi = static_cast<int>(x);
         return x < xi ? xi - 1 : xi;
     }
 
@@ -212,7 +212,7 @@ struct P_noise_voronoi : noise
 {
     inline int floor(double v)
     {
-        int i = (int)v;
+        int i = static_cast<int>(v);
         return v >= i ? i : i - 1;
     }
 
@@ -220,7 +220,7 @@ struct P_noise_voronoi : noise
     {
         long v1 = (x + 2687 * y + 433 * z + 941 * seed) & INT_MAX;
         long v2 = (v1 * (v1 * v1 * 113 + 653) + 2819) & INT_MAX;
-        return 1 - (double)v2 / INT_MAX;
+        return 1 - static_cast<double>(v2) / static_cast<double>(INT_MAX);
     }
 
     double generate(double x, double y, double z) override

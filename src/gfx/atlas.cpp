@@ -1,8 +1,9 @@
-#include <gfx/image.h>
+#include <algorithm>
 #include <core/log.h>
 #include <core/math.h>
 #include <gfx/atlas.h>
-#include <algorithm>
+#include <gfx/image.h>
+
 
 #define PADDING 1
 
@@ -16,7 +17,7 @@ struct atlas::P_impl
 
 // for unique_ptr<P_impl> to refer
 atlas::atlas(int w, int h)
-    : width(w + PADDING), height(h + PADDING), pixels(new byte[width * height * 4]), P_p(std::make_unique<P_impl>())
+    : width(w + PADDING), height(h + PADDING), pixels(new uint8_t[width * height * 4]), P_p(std::make_unique<P_impl>())
 {
 }
 
@@ -60,7 +61,7 @@ std::shared_ptr<texture> atlas::accept(std::shared_ptr<image> image)
             continue;
         int score = std::min(fr.width - rw, fr.height - rh);
         if (score < best_score)
-            best_score = score, best = (int)i;
+            best_score = score, best = static_cast<int>(i);
     }
     if (best == -1)
         print_throw(ARC_FATAL, "atlas is not big enough. please expand it.");

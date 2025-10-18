@@ -1,14 +1,17 @@
+#include <core/buffer.h>
 #include <core/io.h>
 #include <net/packet.h>
 #include <net/socket.h>
-#include <core/buffer.h>
 
 namespace arc::net
 {
 
-std::vector<byte> packet::pack(std::shared_ptr<packet> p)
+std::vector<uint8_t> packet::pack(std::shared_ptr<packet> p)
 {
-    auto n = typeid(*p).hash_code();
+    // need to de-refer here
+    // idk why clang warns me. this way to eliminate the warning.
+    auto const &ref = *p;
+    auto n = typeid(ref).hash_code();
     auto it = P_get_packet_map_h2i().find(n);
 
     if (it == P_get_packet_map_h2i().end())

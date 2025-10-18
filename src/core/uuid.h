@@ -1,12 +1,13 @@
 #pragma once
 #include <core/def.h>
+#include <string>
 
 namespace arc
 {
 
 struct uuid
 {
-    byte bytes[16] = {0};
+    uint8_t bytes[16] = {0};
     size_t P_hash;
 
     uuid() = default;

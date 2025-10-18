@@ -1,10 +1,10 @@
 #pragma once
+#include <core/buffer.h>
 #include <core/def.h>
 #include <core/uuid.h>
-#include <unordered_map>
-#include <string>
 #include <functional>
-#include <core/buffer.h>
+#include <unordered_map>
+
 
 #define ARC_USE_BUILTIN_PACKETS
 
@@ -38,7 +38,7 @@ struct packet : std::enable_shared_from_this<packet>
     // zipped int: PID
     // zipped int: DATA
 
-    static std::vector<byte> pack(std::shared_ptr<packet> p);
+    static std::vector<uint8_t> pack(std::shared_ptr<packet> p);
     static std::shared_ptr<packet> unpack(byte_buf &buf, int len);
 
     void send_to_server();
@@ -77,6 +77,31 @@ struct packet_2s_heartbeat : packet
     void perform(packet_context *ctx) override
     {
         ctx->hold_alive(sender);
+    }
+};
+
+struct packet_dummy : packet
+{
+    std::string str;
+
+    packet_dummy() = default;
+    packet_dummy(const std::string &str) : str(str)
+    {
+    }
+
+    void read(byte_buf &buf) override
+    {
+        str = buf.read_string();
+    }
+
+    void write(byte_buf &buf) const override
+    {
+        buf.write_string(str);
+    }
+
+    void perform(packet_context *) override
+    {
+        print(ARC_DEBUG, str);
     }
 };
 #endif

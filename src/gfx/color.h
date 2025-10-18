@@ -1,5 +1,6 @@
 #pragma once
 #include <core/def.h>
+#include <cstdint>
 
 namespace arc::gfx
 {
@@ -30,8 +31,8 @@ struct color
         a = w;
     }
 
-    static color from_bytes(byte r, byte g, byte b, byte a);
-    void get_bytes(byte *br, byte *bg, byte *bb, byte *ba);
+    static color from_bytes(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+    void get_bytes(uint8_t *br, uint8_t *bg, uint8_t *bb, uint8_t *ba);
 
     // this operation is used so frequently so that we inline it.
     inline color operator*(const color &v) const

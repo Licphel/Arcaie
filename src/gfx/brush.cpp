@@ -1,11 +1,12 @@
 #include <core/log.h>
-#include <gfx/brush.h>
-#include <gfx/device.h>
-#include <gfx/mesh.h>
-#include <gfx/image.h>
 #include <core/math.h>
-#include <gfx/shader.h>
+#include <gfx/brush.h>
 #include <gfx/buffer.h>
+#include <gfx/device.h>
+#include <gfx/image.h>
+#include <gfx/mesh.h>
+#include <gfx/shader.h>
+
 
 // clang-format off
 #include <gl/glew.h>
@@ -363,11 +364,11 @@ void brush::draw_triagle(const vec2 &p1, const vec2 &p2, const vec2 &p3)
 
     assert_mode(graph_mode::COLORED_TRIANGLE);
 
-    buf->vtx(float(p1.x)).vtx(float(p1.y));
+    buf->vtx(static_cast<float>(p1.x)).vtx(static_cast<float>(p1.y));
     P_w_half(buf, vertex_color[0]);
-    buf->vtx(float(p2.x)).vtx(float(p2.y));
+    buf->vtx(static_cast<float>(p2.x)).vtx(static_cast<float>(p2.y));
     P_w_half(buf, vertex_color[1]);
-    buf->vtx(float(p3.x)).vtx(float(p3.y));
+    buf->vtx(static_cast<float>(p3.x)).vtx(static_cast<float>(p3.y));
     P_w_half(buf, vertex_color[2]);
     buf->new_vertex(3);
 }
@@ -378,9 +379,9 @@ void brush::draw_line(const vec2 &p1, const vec2 &p2)
 
     assert_mode(graph_mode::COLORED_LINE);
 
-    buf->vtx(float(p1.x)).vtx(float(p1.y));
+    buf->vtx(static_cast<float>(p1.x)).vtx(static_cast<float>(p1.y));
     P_w_half(buf, vertex_color[0]);
-    buf->vtx(float(p2.x)).vtx(float(p2.y));
+    buf->vtx(static_cast<float>(p2.x)).vtx(static_cast<float>(p2.y));
     P_w_half(buf, vertex_color[1]);
     buf->new_vertex(2);
 }
@@ -391,7 +392,7 @@ void brush::draw_point(const vec2 &p)
 
     assert_mode(graph_mode::COLORED_POINT);
 
-    buf->vtx(float(p.x)).vtx(float(p.y));
+    buf->vtx(static_cast<float>(p.x)).vtx(static_cast<float>(p.y));
     P_w_half(buf, vertex_color[0]);
     buf->new_vertex(1);
 }
@@ -480,7 +481,7 @@ void brush::scissor_end()
 {
     flush();
     vec2 v = tk_get_size();
-    glScissor(-0.5, -0.5, v.x + 1.0, v.y + 1.0);
+    glScissor(0, 0, v.x + 1.0, v.y + 1.0);
     glDisable(GL_SCISSOR_TEST);
 }
 

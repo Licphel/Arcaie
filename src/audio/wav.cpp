@@ -89,7 +89,7 @@ std::shared_ptr<track> P_wav_load(const path_handle &path)
         else if (identifier == "data")
         {
             byte_size = chunk_size;
-            const byte *data = &file[index];
+            const uint8_t *data = &file[index];
             alBufferData(buffer, format, data, chunk_size, samp_rate);
             index += chunk_size;
         }
@@ -101,7 +101,7 @@ std::shared_ptr<track> P_wav_load(const path_handle &path)
 
     std::shared_ptr<track> ptr = std::make_shared<track>();
     ptr->P_track_id = buffer;
-    ptr->sec_len = (double)byte_size / (samp_rate * bps / 8.0) / n_ch;
+    ptr->sec_len = static_cast<double>(byte_size) / (samp_rate * bps / 8.0) / n_ch;
 
     return ptr;
 }

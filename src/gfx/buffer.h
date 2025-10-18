@@ -12,7 +12,7 @@ struct brush;
 // maybe in the future I'll extend it.
 struct complex_buffer
 {
-    std::vector<byte> vertex_buf;
+    std::vector<uint8_t> vertex_buf;
     std::vector<unsigned int> index_buf;
     int vertex_count = 0;
     int index_count = 0;

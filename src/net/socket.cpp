@@ -1,9 +1,9 @@
+#include <core/buffer.h>
 #include <core/time.h>
-#include <deque>
 #include <fmt/format.h>
 #include <gfx/device.h>
 #include <net/socket.h>
-#include <core/buffer.h>
+
 #include <queue>
 
 // boost.asio include
@@ -76,7 +76,7 @@ struct socket::P_impl
     std::thread broadcast_thread;
     uint16_t broadcast_port = P_UDP_BC_PORT;
 
-    struct channel
+    struct channel : std::enable_shared_from_this<channel>
     {
         tcp::socket sock;
         byte_buf rcvbuf = byte_buf(NET_BUF_SIZE);
@@ -89,19 +89,30 @@ struct socket::P_impl
         channel() = delete;
         channel(asio::io_context &ioc, uuid uid) : sock(ioc), id(uid)
         {
-            worker = std::thread([this] { P_write(); });
+        }
+
+        void P_wake()
+        {
+            worker = std::thread([self = shared_from_this()] { self->P_write(); });
         }
 
         void P_write()
         {
             auto pkt = snd_packets.take();
             auto buf = packet::pack(pkt);
-            asio::async_write(sock, asio::buffer(buf), [this](std::error_code ec, size_t) {
-                if (ec)
-                    print(ARC_WARN, "fail to write async: {}", ec.message());
-                if (is_term)
-                    return;
-                asio::post(sock.get_executor(), [this] { P_write(); });
+            auto self = weak_from_this();
+            asio::async_write(sock, asio::buffer(buf), [self](std::error_code ec, size_t) {
+                if (auto shared_self = self.lock())
+                {
+                    if (ec)
+                        print(ARC_WARN, "fail to write async: {}", ec.message());
+                    if (shared_self->is_term)
+                        return;
+                    asio::post(shared_self->sock.get_executor(), [self] {
+                        if (auto shared_self = self.lock())
+                            shared_self->P_write();
+                    });
+                }
             });
         }
     };
@@ -116,6 +127,41 @@ struct socket::P_impl
 
     P_impl() : ioc(), client_sock(ioc), acceptor(ioc), broadcaster(ioc)
     {
+    }
+
+    ~P_impl()
+    {
+        is_term = true;
+
+        // stop all async tasks
+        acceptor.cancel();
+        acceptor.close();
+        broadcaster.cancel();
+        broadcaster.close();
+        client_sock.cancel();
+        client_sock.close();
+
+        for (auto &[id, ch] : channels)
+        {
+            ch->sock.cancel();
+            ch->sock.close();
+            ch->is_term = true;
+            ch->snd_packets.push(nullptr); // wake up the worker
+        }
+
+        // wake up ioc
+        asio::post(ioc, [] {});
+
+        if (ioc_worker.joinable())
+            ioc_worker.join();
+        if (worker.joinable())
+            worker.join();
+        if (broadcast_thread.joinable())
+            broadcast_thread.join();
+
+        for (auto &[id, ch] : channels)
+            if (ch->worker.joinable())
+                ch->worker.join();
     }
 
     void remote_connect(const std::string &host, uint16_t port)
@@ -138,6 +184,8 @@ struct socket::P_impl
             while (!is_term)
             {
                 auto pkt = snd_packets.take();
+                if(pkt == nullptr)
+                    break;
                 auto buf = packet::pack(pkt);
                 asio::async_write(client_sock, asio::buffer(buf), [](std::error_code ec, size_t) {
                     if (ec)
@@ -150,13 +198,20 @@ struct socket::P_impl
 
     void remote_disconnect()
     {
+        if (is_term || !is_remote)
+            return;
+
+        is_remote = false;
+        is_term = true;
+
+        if (worker.joinable())
+            worker.join();
+
         ioc.stop();
         if (ioc_worker.joinable())
             ioc_worker.join();
 
         client_sock.close();
-        is_remote = false;
-        is_term = true;
 
         print(ARC_INFO, "[remote] remote disconnected.");
     }
@@ -268,25 +323,43 @@ struct socket::P_impl
 
     void server_stop()
     {
-        ioc.stop();
-        if (ioc_worker.joinable())
-            ioc_worker.join();
-
-        print(ARC_INFO, "[server] server is stopped.");
+        if (!is_server || is_term)
+            return;
 
         is_server = false;
         is_term = true;
+        stop_broadcast();
+        ioc.stop();
+
+        for (auto &[id, channel] : channels)
+        {
+            channel->is_term = true;
+            channel->snd_packets.push(nullptr);
+        }
+
+        for (auto &[id, channel] : channels)
+        {
+            if (channel->worker.joinable())
+                channel->worker.join();
+            channel->sock.close();
+        }
+        channels.clear();
 
         acceptor.close();
-        stop_broadcast();
-        for (auto &[id, r] : channels)
-            r->sock.close();
-        channels.clear();
+
+        if (ioc_worker.joinable())
+            ioc_worker.join();
+
+        if (worker.joinable())
+            worker.join();
+
+        print(ARC_INFO, "[server] server is stopped.");
     }
 
     void server_accept()
     {
         auto remote = std::make_shared<channel>(ioc, uuid::make());
+        remote->P_wake();
 
         acceptor.async_accept(remote->sock, [this, remote](std::error_code ec) {
             if (!ec)
@@ -481,12 +554,12 @@ void socket::hold_alive(const uuid &id)
 
 static socket P_server, P_remote;
 
-socket& socket::server()
+socket &socket::server()
 {
     return P_server;
 }
 
-socket& socket::remote()
+socket &socket::remote()
 {
     return P_remote;
 }

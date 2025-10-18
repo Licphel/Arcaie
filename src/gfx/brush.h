@@ -1,6 +1,5 @@
 #pragma once
 #include <core/def.h>
-#include <functional>
 #include <gfx/camera.h>
 #include <gfx/color.h>
 #include <gfx/state.h>

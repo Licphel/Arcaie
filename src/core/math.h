@@ -56,8 +56,8 @@ struct vec3
 // 2x3 matrix for 2d transformations (called an affine matrix)
 struct transform
 {
-    float m00 = 1.0f, m01 = 0.0f, m02 = 0.0f;
-    float m10 = 0.0f, m11 = 1.0f, m12 = 0.0f;
+    float m00 = 1.0, m01 = 0.0, m02 = 0.0;
+    float m10 = 0.0, m11 = 1.0, m12 = 0.0;
 
     transform();
     transform(float m00, float m01, float m02, float m10, float m11, float m12);
@@ -66,13 +66,13 @@ struct transform
     transform &load(const transform &o);
     transform &orthographic(float left, float right, float bottom, float top);
     transform &mul(const transform &o);
-    float det() const;
     transform &invert();
-    void apply(vec2 &v) const;
     transform &translate(float tx, float ty);
     transform &scale(float sx, float sy);
     transform &rotate(float rad);
     transform &shear(float shx, float shy);
+    void apply(vec2 &v) const;
+    float det() const;
 };
 
 // axis-aligned rectangle (called quad)

@@ -129,7 +129,7 @@ camera &camera::gui(bool only_int, double fixed_resolution)
         while (size.x / (factor + 0.5) >= 800.0 && size.y / (factor + 0.5) >= 450.0)
             factor += 0.5;
 
-        if (only_int && int(factor * 2) % 2 != 0 && factor - 0.5 > 0)
+        if (only_int && static_cast<int>(factor * 2) % 2 != 0 && factor - 0.5 > 0)
             factor -= 0.5;
     }
     P_cam_gui.view = quad(0, 0, size.x / factor, size.y / factor);

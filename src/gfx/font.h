@@ -1,9 +1,10 @@
 #pragma once
+#include <core/io.h>
 #include <core/math.h>
-#include <unordered_map>
 #include <gfx/brush.h>
 #include <gfx/image.h>
-#include <core/io.h>
+#include <unordered_map>
+
 
 namespace arc::gfx
 {
@@ -52,7 +53,7 @@ struct font
     struct P_impl;
     std::unique_ptr<P_impl> P_pimpl;
 
-    std::unordered_map<u32_char, glyph> glyph_map;
+    std::unordered_map<char32_t, glyph> glyph_map;
     double height = 0;
     double lspc = 0;
     double ascend = 0;
@@ -61,22 +62,20 @@ struct font
     font();
     ~font();
 
-    glyph get_glyph(u32_char ch)
+    glyph get_glyph(char32_t ch)
     {
         if (glyph_map.find(ch) == glyph_map.end())
             return glyph_map[ch] = make_glyph(ch);
         return glyph_map[ch];
     }
 
-    glyph make_glyph(u32_char ch);
+    glyph make_glyph(char32_t ch);
     // draw the stringin the font, return the bounding box.
     // and if brush is nullptr, it won't draw anything, just calculating the bounding box.
     font_render_bound make_vtx(std::shared_ptr<brush> brush, const std::string &str, double x, double y,
-                               long align = font_align::NORMAL,
-                               double max_w = INT_MAX, double scale = 1);
+                               long align = font_align::NORMAL, double max_w = INT_MAX, double scale = 1);
     font_render_bound make_vtx(std::shared_ptr<brush> brush, const std::u32string &str, double x, double y,
-                               long align = font_align::NORMAL,
-                               double max_w = INT_MAX, double scale = 1);
+                               long align = font_align::NORMAL, double max_w = INT_MAX, double scale = 1);
 
     static std::shared_ptr<font> load(const path_handle &path, double res_h, double pixel_h);
 };

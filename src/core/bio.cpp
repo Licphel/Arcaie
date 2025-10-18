@@ -1,7 +1,8 @@
-#include <core/bio.h>
 #include <core/bin.h>
+#include <core/bio.h>
 #include <core/buffer.h>
 #include <core/io.h>
+
 
 namespace arc
 {
@@ -11,12 +12,12 @@ void P_write_array(byte_buf &buf, const binary_array &arr);
 
 void P_write_primitive(byte_buf &buf, const binary_value &v)
 {
-    buf.write<byte>((byte)v.type);
+    buf.write<uint8_t>((uint8_t)v.type);
 
     switch (v.type)
     {
     case P_bincvt::BYTE:
-        buf.write<byte>(v.cast<byte>());
+        buf.write<uint8_t>(v.cast<uint8_t>());
         break;
     case P_bincvt::SHORT:
         buf.write<short>(v.cast<short>());
@@ -64,7 +65,7 @@ void P_write_map(byte_buf &buf, const binary_map &map)
         buf.write_string(str);
     }
 
-    buf.write<byte>((byte)P_bincvt::MAP_ENDV);
+    buf.write<uint8_t>((uint8_t)P_bincvt::MAP_ENDV);
 }
 
 void P_write_array(byte_buf &buf, const binary_array &arr)
@@ -79,15 +80,15 @@ binary_array P_read_array(byte_buf &buf);
 
 binary_value P_read_primitive(byte_buf &buf)
 {
-    byte id = buf.read<byte>();
+    uint8_t id = buf.read<uint8_t>();
 
-    if (id == (byte)P_bincvt::MAP_ENDV)
+    if (id == (uint8_t)P_bincvt::MAP_ENDV)
         return {P_bincvt::MAP_ENDV, std::any(0)};
 
     switch ((P_bincvt)id)
     {
     case P_bincvt::BYTE:
-        return binary_value::make(buf.read<byte>());
+        return binary_value::make(buf.read<uint8_t>());
     case P_bincvt::SHORT:
         return binary_value::make(buf.read<short>());
     case P_bincvt::INT:
@@ -108,9 +109,9 @@ binary_value P_read_primitive(byte_buf &buf)
         return binary_value::make(P_read_array(buf));
     case P_bincvt::BUF:
         return binary_value::make(buf.read_byte_buf());
+    default:
+        print_throw(ARC_FATAL, "unknown binary id.");
     }
-
-    print_throw(ARC_FATAL, "unknown binary id.");
 }
 
 binary_map P_read_map(byte_buf &buf)
@@ -225,7 +226,7 @@ binary_value P_binparser::P_parse_value()
     if (c == '-' || (c >= '0' && c <= '9'))
         return P_parse_num();
 
-    print_throw(ARC_FATAL, "unexpected character at position " + pos);
+    print_throw(ARC_FATAL, "unexpected character at position {}", pos);
 }
 
 binary_value P_binparser::P_parse_bool()
@@ -240,7 +241,7 @@ binary_value P_binparser::P_parse_bool()
         pos += 5;
         return binary_value::make(false);
     }
-    print_throw(ARC_FATAL, "expected boolean at position " + pos);
+    print_throw(ARC_FATAL, "expected boolean at position {}", pos);
 }
 
 binary_value P_binparser::P_parse_num()
@@ -290,7 +291,7 @@ std::string P_binparser::P_parse_key()
 binary_value P_binparser::P_parse_str()
 {
     if (P_cur_ch() != '"')
-        print_throw(ARC_FATAL, "expected '\"' at position " + pos);
+        print_throw(ARC_FATAL, "expected '\"' at position {}", pos);
     P_nxt();
 
     std::string result;
@@ -347,7 +348,7 @@ binary_value P_binparser::P_parse_str()
     }
 
     if (P_cur_ch() != '"')
-        print_throw(ARC_FATAL, "unterminated std::stringat position " + pos);
+        print_throw(ARC_FATAL, "unterminated std::stringat position {}", pos);
     P_nxt();
 
     return binary_value::make(result);
@@ -356,7 +357,7 @@ binary_value P_binparser::P_parse_str()
 binary_value P_binparser::P_parse_arr()
 {
     if (P_cur_ch() != '[')
-        print_throw(ARC_FATAL, "expected '[' at position " + pos);
+        print_throw(ARC_FATAL, "expected '[' at position {}", pos);
     P_nxt();
 
     binary_array result;
@@ -376,13 +377,13 @@ binary_value P_binparser::P_parse_arr()
         if (P_cur_ch() == ']')
             break;
         if (P_cur_ch() != ',')
-            print_throw(ARC_FATAL, "expected ',' or ']' in array at position " + pos);
+            print_throw(ARC_FATAL, "expected ',' or ']' in array at position {}", pos);
         P_nxt();
         P_skipspace();
     }
 
     if (P_cur_ch() != ']')
-        print_throw(ARC_FATAL, "unterminated array at position " + pos);
+        print_throw(ARC_FATAL, "unterminated array at position {}", pos);
     P_nxt();
 
     return binary_value::make(result);
@@ -391,7 +392,7 @@ binary_value P_binparser::P_parse_arr()
 binary_value P_binparser::P_parse_map()
 {
     if (P_cur_ch() != '{')
-        print_throw(ARC_FATAL, "expected '{' at position " + pos);
+        print_throw(ARC_FATAL, "expected '{' at position {}", pos);
     P_nxt();
 
     binary_map result;
@@ -409,7 +410,7 @@ binary_value P_binparser::P_parse_map()
         std::string key = P_parse_key();
         P_skipspace();
         if (P_cur_ch() != '=')
-            print_throw(ARC_FATAL, "expected '=' after object key at position " + pos);
+            print_throw(ARC_FATAL, "expected '=' after object key at position {}", pos);
         P_nxt();
 
         binary_value value = P_parse_value();
@@ -420,13 +421,13 @@ binary_value P_binparser::P_parse_map()
         if (P_cur_ch() == '}')
             break;
         if (P_cur_ch() != ',')
-            print_throw(ARC_FATAL, "expected ',' or '}' in object at position " + pos);
+            print_throw(ARC_FATAL, "expected ',' or '}' in object at position {}", pos);
 
         P_nxt();
     }
 
     if (P_cur_ch() != '}')
-        print_throw(ARC_FATAL, "unterminated object at position " + pos);
+        print_throw(ARC_FATAL, "unterminated object at position {}", pos);
     P_nxt();
 
     return binary_value::make(result);
@@ -440,4 +441,4 @@ binary_map bio_read_langd(const path_handle &path)
     return result.cast<binary_map>();
 }
 
-} // namespace arcaie
+} // namespace arc
